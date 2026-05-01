@@ -1,0 +1,60 @@
+name: Check Code Formatting
+
+# Run this workflow when:
+# - PR is opened or updated
+# - For all branches
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  check-formatting:
+    runs-on: ubuntu-latest
+    name: Validate Code Formatting
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Check Frontend Formatting
+        run: |
+          cd frontend
+          echo "🔍 Checking frontend code formatting..."
+          echo ""
+
+          # Install dependencies
+          echo "📦 Installing dependencies..."
+          npm ci --prefer-offline --no-audit
+
+          # Check Prettier formatting
+          echo "🎨 Running Prettier check..."
+          if npx prettier --check src --write-check 2>&1 | tee prettier-output.txt; then
+            echo "✅ Frontend code is properly formatted"
+          else
+            echo ""
+            echo "❌ FAILED: Code formatting issues found!"
+            echo ""
+            echo "📝 To fix automatically, run:"
+            echo "   npm run format"
+            echo ""
+            echo "Or manually check the files listed above and fix according to:"
+            echo "📖 .prettierrc.json (Prettier configuration)"
+            echo ""
+            cat prettier-output.txt
+            exit 1
+          fi
+
+      - name: Summary
+        if: success()
+        run: |
+          echo ""
+          echo "✅ All code formatting checks passed!"
+          echo ""
+          echo "✨ Code is properly formatted and ready for review"
