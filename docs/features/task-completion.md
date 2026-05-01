@@ -1,8 +1,10 @@
-# Feature: Task Completion Toggle
+# Feature: Task Completion Checkbox
 
 **Branch:** `feat/task-completion`  
 **Status:** Implementation Complete  
 **Date:** May 2026
+
+> **Note:** "Toggle" in this context refers to the checkbox UI element that switches a task's status, **not** a feature flag or feature toggle used for gradual rollouts.
 
 ---
 

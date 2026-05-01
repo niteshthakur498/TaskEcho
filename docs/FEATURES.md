@@ -24,7 +24,7 @@ This document tracks all features implemented in TaskEcho, their status, and whe
 
 ---
 
-### 2. Task Completion Toggle
+### 2. Task Completion Checkbox
 **Status:** Released  
 **Version:** 1.0.0  
 **Branch:** master  
@@ -32,8 +32,8 @@ This document tracks all features implemented in TaskEcho, their status, and whe
 **Date:** May 2026
 
 **Features:**
-- Mark tasks as completed via checkbox
-- Toggle between PENDING and COMPLETED status
+- Mark tasks as completed via checkbox (not a feature flag)
+- Switch task status between PENDING and COMPLETED states
 - Separate UI sections for Pending and Completed tasks
 - Task count in each section header
 - Visual styling for completed tasks (strikethrough, gray text)
