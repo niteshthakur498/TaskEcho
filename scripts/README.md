@@ -2,7 +2,41 @@
 
 Utility scripts for development, deployment, and monitoring.
 
+## Quick Reference
+
+| Script | Purpose | When to use |
+|---|---|---|
+| `install.sh` | Check prerequisites & install dependencies | After cloning the repo |
+| `health-check.sh` | Comprehensive service health check | Verify both services are running |
+| `liveness.sh` | Exit code health probe (0/1) | Docker/K8s health checks, CI/CD |
+| `start.sh` | Start both services in background | Local development |
+| `stop.sh` | Stop services on ports 8080 & 3000 | Clean shutdown |
+| `api-test.sh` | Smoke test the backend API | After deployment or changes |
+
 ## Available Scripts
+
+### `install.sh`
+
+Checks prerequisites and installs all dependencies.
+
+```bash
+bash scripts/install.sh
+```
+
+**What it checks:**
+- Java 21+ is installed
+- Node.js 20+ is installed
+- npm is available
+- Maven 3.9+ is installed (or Maven wrapper exists)
+
+**What it does:**
+- Runs `mvn clean install` for backend
+- Runs `npm install` for frontend
+- Stops on missing prerequisites with installation links
+
+**Use case:** First-time setup after cloning the repo.
+
+---
 
 ### `health-check.sh`
 
@@ -88,6 +122,18 @@ bash scripts/api-test.sh
 ---
 
 ## Usage Examples
+
+**First-time setup:**
+```bash
+# Install all dependencies
+bash scripts/install.sh
+
+# Start both services
+bash scripts/start.sh
+
+# In another terminal, verify they're healthy
+bash scripts/health-check.sh
+```
 
 **Complete workflow:**
 ```bash
