@@ -1,0 +1,105 @@
+name: Check Documentation
+
+# Run this workflow when:
+# - PR is opened or updated
+# - Only for feature branches (feat/*)
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+    name: Validate Feature Documentation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Extract feature name from branch
+        id: feature
+        run: |
+          BRANCH_NAME=${{ github.head_ref }}
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+          # Extract feature name (feat/task-completion → task-completion)
+          if [[ $BRANCH_NAME == feat/* ]]; then
+            FEATURE_NAME=$(echo $BRANCH_NAME | sed 's/feat\///')
+            echo "feature_name=$FEATURE_NAME" >> $GITHUB_OUTPUT
+            echo "is_feature=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_feature=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check documentation exists for feature branch
+        if: steps.feature.outputs.is_feature == 'true'
+        run: |
+          FEATURE_NAME="${{ steps.feature.outputs.feature_name }}"
+          DOC_FILE="docs/features/$FEATURE_NAME.md"
+
+          echo "📋 Checking documentation for feature: $FEATURE_NAME"
+          echo "📁 Expected file: $DOC_FILE"
+
+          if [ ! -f "$DOC_FILE" ]; then
+            echo ""
+            echo "❌ FAILED: Documentation file is missing!"
+            echo ""
+            echo "📝 Please create: $DOC_FILE"
+            echo ""
+            echo "Use this template:"
+            echo "1. Copy an existing feature doc from docs/features/"
+            echo "2. Update it with your feature details"
+            echo "3. Include these required sections:"
+            echo "   - Functional Changes"
+            echo "   - Technical Design"
+            echo "   - Tech Decisions & Rationale"
+            echo "   - Implementation Details"
+            echo "   - Testing Recommendations"
+            echo "   - Deployment Notes"
+            echo ""
+            echo "📖 See: docs/README.md for documentation standards"
+            exit 1
+          fi
+
+          echo "✅ Documentation file found: $DOC_FILE"
+
+      - name: Validate documentation structure
+        if: steps.feature.outputs.is_feature == 'true'
+        run: |
+          FEATURE_NAME="${{ steps.feature.outputs.feature_name }}"
+          DOC_FILE="docs/features/$FEATURE_NAME.md"
+
+          echo "🔍 Validating documentation structure..."
+
+          MISSING_SECTIONS=()
+
+          # Check for required sections
+          grep -q "## Functional Changes" "$DOC_FILE" || MISSING_SECTIONS+=("Functional Changes")
+          grep -q "## Technical Design" "$DOC_FILE" || MISSING_SECTIONS+=("Technical Design")
+          grep -q "## Tech Decisions" "$DOC_FILE" || MISSING_SECTIONS+=("Tech Decisions")
+
+          if [ ${#MISSING_SECTIONS[@]} -eq 0 ]; then
+            echo "✅ All required sections found"
+            exit 0
+          fi
+
+          echo ""
+          echo "⚠️  WARNING: Some expected sections are missing:"
+          for section in "${MISSING_SECTIONS[@]}"; do
+            echo "   - $section"
+          done
+          echo ""
+          echo "📖 While not blocking the merge, these sections help reviewers understand:"
+          echo "   - What the feature does (Functional Changes)"
+          echo "   - How it works (Technical Design)"
+          echo "   - Why you chose this approach (Tech Decisions)"
+          echo ""
+          echo "💡 Consider adding these sections for better documentation."
+          echo ""
+
+      - name: Skip check for non-feature branches
+        if: steps.feature.outputs.is_feature == 'false'
+        run: |
+          BRANCH_NAME="${{ steps.feature.outputs.branch_name }}"
+          echo "ℹ️  Documentation check skipped for branch: $BRANCH_NAME"
+          echo "ℹ️  Documentation checks only apply to feature branches (feat/*)"
