@@ -252,7 +252,146 @@ Every project must have a `README.md` at the root. Claude should create or maint
 
 ---
 
-## 8. Environment & Configuration
+## 8. Feature Documentation Rules
+
+Every feature branch should include corresponding documentation that merges with the code to master. Documentation ensures all decisions are recorded and future developers understand the rationale behind implementations.
+
+### 8.1 Documentation Location & Structure
+
+```
+docs/
+├── README.md                          # Index and documentation standards
+├── FEATURES.md                        # Feature changelog and roadmap
+└── features/
+    ├── feature-name.md                # Each feature has a detailed doc file
+    └── another-feature.md
+```
+
+- Create feature documentation in `docs/features/<feature-name>.md`
+- Use kebab-case for filenames matching the branch name (e.g., `task-completion.md` for `feat/task-completion`)
+- Update `docs/FEATURES.md` with the new feature when merging to master
+
+### 8.2 Required Sections in Feature Documentation
+
+Every feature document **must** include:
+
+#### 1. Functional Changes
+- What the feature does from a user perspective
+- Key capabilities and interactions
+- User workflow benefits
+- How it fits into the application
+
+#### 2. Technical Design
+- Architecture overview (frontend/backend/both)
+- API endpoints (if applicable) with request/response formats
+- Database schema changes (if applicable)
+- Component/class structure and responsibilities
+- Data flow diagrams (if complex)
+
+#### 3. Tech Decisions & Rationale
+- **Every significant decision should have a "why"**
+- Compare approaches and trade-offs
+- Explain why one was chosen over alternatives
+- Include future migration paths (e.g., "currently in-memory, migrate to DB later")
+- Common topics:
+  - Technology choices (frameworks, libraries, patterns)
+  - Architecture decisions (monolithic vs. modular, sync vs. async)
+  - Storage/persistence approach
+  - API design (REST vs. GraphQL, resource vs. action-based)
+  - UI/UX patterns and interactions
+
+#### 4. Implementation Details
+- Files created/modified with specific locations
+- Key functions/methods/components and their purpose
+- Integration points with existing systems
+- Before/after code snippets for major changes
+
+#### 5. Testing Recommendations
+- Frontend testing checklist
+- Backend testing checklist
+- Integration test scenarios
+- Edge cases to cover
+
+#### 6. Deployment Notes
+- Build/compilation requirements
+- Any database migrations
+- Breaking changes (if any)
+- Rollback procedure
+
+### 8.3 Documentation Standards
+
+**Format & Style:**
+- Use **Markdown** format (`.md` files)
+- Write in **plain English**, present tense, active voice
+- Include **code examples** for technical sections (specify language in fenced blocks)
+- Use **clear headings** and **numbered sections** for organization
+- Keep explanations **concise but thorough** — readers want to understand the "why", not just the "what"
+- Use tables for comparisons (alternatives considered, versions, etc.)
+- Include **diagrams or ASCII art** for complex architectures
+
+**Content Requirements:**
+- ❌ Do NOT just repeat code comments or docstrings
+- ✅ DO explain architectural decisions and trade-offs
+- ✅ DO include rationale ("We chose X because Y, not Z")
+- ✅ DO document future enhancements and migration paths
+- ✅ DO link to related documentation (README.md, other features, CLAUDE.md)
+- ❌ Do NOT make assumptions about reader knowledge — explain domain concepts
+
+**Accuracy:**
+- Documentation must match implementation — keep in sync
+- If implementation changes after documentation, update docs immediately
+- Code review should check documentation accuracy
+- Outdated documentation is worse than no documentation
+
+### 8.4 Documentation in the Development Workflow
+
+**When creating a feature branch:**
+1. Create feature branch: `git checkout -b feat/feature-name`
+2. Implement the feature in code
+3. **Simultaneously** create documentation in `docs/features/feature-name.md`
+4. Document decisions **while they're fresh** (not after implementation)
+5. Include testing recommendations from the start
+
+**When committing:**
+- Code and documentation should be committed together
+- Separate commit: `feat(scope): implement feature` for code
+- Separate commit: `docs: add feature-name documentation` for docs
+- Both commits should be in the same PR/branch
+
+**When creating a pull request:**
+- Link to feature documentation in the PR description
+- Ask reviewers to check both code AND documentation
+- Documentation completeness is a merge requirement (like tests)
+
+**When merging to master:**
+- Documentation automatically comes with feature code
+- Update `docs/FEATURES.md` to reflect the new released feature
+- Include feature status, version, and date of release
+
+### 8.5 FEATURES.md Changelog
+
+`docs/FEATURES.md` is the central registry of all features. When merging a feature to master:
+
+```markdown
+### Feature Name
+**Status:** Released  
+**Version:** X.Y.Z  
+**Date:** Month Year  
+
+**Features:**
+- Bullet list of capabilities
+
+**Details:** [Link to docs/features/feature-name.md](features/feature-name.md)
+```
+
+Also maintain:
+- Version history table
+- Upcoming features with priorities
+- Feature request process
+
+---
+
+## 9. Environment & Configuration
 
 - All configurable values come from **environment variables** — no hardcoding.
 - Use `.env` for local development, never commit it. Always commit `.env.example`.
@@ -262,7 +401,7 @@ Every project must have a `README.md` at the root. Claude should create or maint
 
 ---
 
-## 9. Dependency Management
+## 10. Dependency Management
 
 - Do not add a dependency when the standard library suffices.
 - Prefer **well-maintained, widely-adopted** packages over niche alternatives.
@@ -272,7 +411,7 @@ Every project must have a `README.md` at the root. Claude should create or maint
 
 ---
 
-## 10. What Claude Should NOT Do
+## 11. What Claude Should NOT Do
 
 - ❌ Do not modify files unrelated to the current task.
 - ❌ Do not silently skip parts of a request.
@@ -287,7 +426,7 @@ Every project must have a `README.md` at the root. Claude should create or maint
 
 ---
 
-## 11. When Claude Is Unsure
+## 12. When Claude Is Unsure
 
 1. State clearly what is uncertain.
 2. Propose the most reasonable approach with reasoning.
@@ -296,7 +435,7 @@ Every project must have a `README.md` at the root. Claude should create or maint
 
 ---
 
-## 12. Extending This File
+## 13. Extending This File
 
 Create a **project-specific** `CLAUDE.md` (or `CLAUDE.local.md`) at the project root to override or extend these rules. Common additions:
 
