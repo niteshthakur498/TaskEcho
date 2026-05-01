@@ -1,435 +1,203 @@
-# GitHub Actions Implementation Plan
+# GitHub Actions Implementation Plan (Simplified)
 
 **Branch:** `feat/github-actions`  
-**Objective:** Automate code quality, formatting, and documentation checks on pull requests  
-**Status:** Planning
+**Objective:** Automate basic sanity checks on pull requests  
+**Status:** Planning  
+**Scope:** Documentation & Formatting only (MVP)
 
 ---
 
 ## 1. Overview
 
 Implement GitHub Actions workflows to automatically validate:
-- ✅ Feature documentation completeness
-- ✅ Code formatting standards
-- ✅ Basic coding standards & linting
-- ✅ Build validation (compile without errors)
-- ✅ Tests pass (if tests exist)
+- ✅ **Feature documentation completeness** (for feature branches)
+- ✅ **Code formatting standards** (Frontend + Backend)
 
 **Benefits:**
-- Reduce manual review effort
-- Catch issues before human review
-- Enforce consistency across all PRs
-- Block merge if critical checks fail
+- Catch missing documentation before review
+- Enforce consistent code formatting
+- Reduce manual review time for trivial issues
 - Provide quick feedback to developers
 
 ---
 
-## 2. Planned Workflows
+## 2. Two Simple Workflows
 
 ### 2.1 Documentation Check Workflow
 **File:** `.github/workflows/check-documentation.yml`
 
-**Trigger:** On PR opened/synchronize to branches matching `feat/**`
+**Trigger:** On PR opened/synchronized
 
-**Checks:**
-1. Verify PR branch follows naming convention (`feat/`, `fix/`, `docs/`, etc.)
-2. For feature branches (`feat/**`):
-   - Check if `docs/features/[feature-name].md` exists
-   - Validate documentation has required sections:
-     - Functional Changes
-     - Technical Design
-     - Tech Decisions & Rationale
-     - Implementation Details
-     - Testing Recommendations
-     - Deployment Notes
-3. Post comment on PR with results
+**What it checks:**
+- If PR branch is `feat/*`, verify `docs/features/[feature-name].md` exists
+- If file exists, check for key sections:
+  - `## Functional Changes`
+  - `## Technical Design`
+  - `## Tech Decisions`
 
-**Implementation:**
-- Use `bash` script to search for docs
-- Check for required headings in markdown files
-- Report missing sections with helpful message
-- Set check status (pass/fail)
-
-**Example Check:**
+**How it works:**
 ```bash
-# Verify docs exist for feature branch
-if [[ $BRANCH_NAME == feat/* ]]; then
-  FEATURE_NAME=$(echo $BRANCH_NAME | sed 's/feat\///')
-  if [ ! -f "docs/features/$FEATURE_NAME.md" ]; then
-    echo "❌ Missing documentation: docs/features/$FEATURE_NAME.md"
-    exit 1
-  fi
-  
-  # Check for required sections
-  grep -q "## Functional Changes" docs/features/$FEATURE_NAME.md
-  grep -q "## Technical Design" docs/features/$FEATURE_NAME.md
-  # ... etc
+# Extract feature name from branch (feat/task-completion → task-completion)
+FEATURE_NAME=$(echo $BRANCH_NAME | sed 's/feat\///')
+
+# Check if docs file exists
+if [ ! -f "docs/features/$FEATURE_NAME.md" ]; then
+  echo "❌ Documentation missing: docs/features/$FEATURE_NAME.md"
+  exit 1
 fi
+
+# Check for required sections
+grep -q "## Functional Changes" docs/features/$FEATURE_NAME.md
+grep -q "## Technical Design" docs/features/$FEATURE_NAME.md
+grep -q "## Tech Decisions" docs/features/$FEATURE_NAME.md
 ```
+
+**Result:** 
+- ✅ PASS if docs exist and have required sections
+- ❌ FAIL if documentation is missing
+- Helpful comment on PR with what's missing
 
 ---
 
-### 2.2 Code Formatting Workflow
+### 2.2 Code Formatting Check Workflow
 **File:** `.github/workflows/check-formatting.yml`
 
 **Trigger:** On every PR
 
-**Checks:**
+**Frontend Check:**
+1. Install Prettier
+2. Check formatting: `npx prettier --check frontend/src`
+3. Report any formatting issues
 
-#### Frontend (Next.js/TypeScript)
-1. **Prettier** — Code formatting
-   - Install: `npm install prettier --save-dev`
-   - Config: `.prettierrc.json` (or `.prettierrc`)
-   - Run: `prettier --check frontend/src`
-   - Auto-fix available on demand
-
-2. **ESLint** — JavaScript/TypeScript linting
-   - Install: `npm install eslint --save-dev`
-   - Config: `frontend/.eslintrc.json`
-   - Run: `npm run lint` (frontend)
-   - Catches unused variables, missing semicolons, etc.
-
-#### Backend (Java/Maven)
-1. **Checkstyle** — Java code style
-   - Maven plugin in `pom.xml`
-   - Config: `checkstyle.xml`
-   - Run: `mvn checkstyle:check`
-   - Validates naming conventions, whitespace, etc.
-
-2. **SpotBugs** — Java bug detection
-   - Maven plugin
-   - Run: `mvn spotbugs:check`
-   - Catches potential bugs early
-
-**Implementation:**
-- Install dependencies in workflow
-- Run linters/formatters
-- Generate reports
-- Comment on PR with results
-- Fail if violations found
-
-**Example:**
-```yaml
-- name: Check Frontend Formatting
-  run: |
-    cd frontend
-    npm install
-    npx prettier --check src
-    npm run lint
-    
-- name: Check Backend Formatting
-  run: |
-    cd backend
-    mvn checkstyle:check
-    mvn spotbugs:check
-```
+**Backend Check:**
+1. Install dependencies
+2. Run existing Java formatting checks
+3. Report any style violations
 
 ---
 
-### 2.3 Build Validation Workflow
-**File:** `.github/workflows/check-build.yml`
-
-**Trigger:** On every PR
-
-**Checks:**
-
-#### Frontend Build
-```yaml
-- name: Build Frontend
-  run: |
-    cd frontend
-    npm install
-    npm run build
-```
-
-#### Backend Build
-```yaml
-- name: Build Backend
-  run: |
-    cd backend
-    mvn clean package -DskipTests
-```
-
-**What it catches:**
-- Compilation errors
-- Import issues
-- TypeScript type errors
-- Missing dependencies
-
----
-
-### 2.4 Tests Workflow (Future)
-**File:** `.github/workflows/check-tests.yml`
-
-**When we add tests:**
-```yaml
-- name: Run Frontend Tests
-  run: |
-    cd frontend
-    npm test
-
-- name: Run Backend Tests
-  run: |
-    cd backend
-    mvn test
-```
-
----
-
-## 3. Configuration Files to Create
+## 3. Files to Create/Modify
 
 ### 3.1 Frontend Configuration
 
-**`.prettierrc.json`** — Prettier formatting rules
+**`.prettierrc.json`** — Prettier rules (new file)
 ```json
 {
   "semi": true,
-  "trailingComma": "es5",
   "singleQuote": false,
   "printWidth": 100,
   "tabWidth": 2,
-  "useTabs": false,
-  "arrowParens": "always"
+  "trailingComma": "es5"
 }
 ```
 
-**`frontend/.eslintrc.json`** — ESLint rules
-```json
-{
-  "extends": [
-    "next/core-web-vitals"
-  ],
-  "rules": {
-    "no-unused-vars": "error",
-    "no-console": "warn",
-    "prefer-const": "error"
-  }
-}
-```
-
-**`package.json` scripts** (frontend)
+**`frontend/package.json`** — Add script (modify existing)
 ```json
 {
   "scripts": {
-    "lint": "eslint src --ext .ts,.tsx",
     "format": "prettier --write src",
     "format:check": "prettier --check src"
   }
 }
 ```
 
-### 3.2 Backend Configuration
+### 3.2 GitHub Actions Workflows
 
-**`checkstyle.xml`** — Checkstyle rules (or use Google/Sun style)
+Create `.github/workflows/` directory with:
 
-**`pom.xml`** updates — Add plugins:
-```xml
-<plugins>
-  <plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-checkstyle-plugin</artifactId>
-    <version>3.2.0</version>
-    <configuration>
-      <configLocation>checkstyle.xml</configLocation>
-      <failOnViolation>true</failOnViolation>
-    </configuration>
-  </plugin>
-  
-  <plugin>
-    <groupId>com.github.spotbugs</groupId>
-    <artifactId>spotbugs-maven-plugin</artifactId>
-    <version>4.7.2.0</version>
-    <configuration>
-      <failOnError>true</failOnError>
-    </configuration>
-  </plugin>
-</plugins>
-```
+**`check-documentation.yml`** (30 lines)
+- Runs for `feat/*` branches
+- Validates doc file exists
+- Checks for required sections
+
+**`check-formatting.yml`** (40 lines)
+- Frontend: Prettier check
+- Backend: Existing checks
+- Simple pass/fail
 
 ---
 
-## 4. GitHub Actions Workflow Directory Structure
+## 4. Directory Structure
 
 ```
 .github/
-├── workflows/
-│   ├── check-documentation.yml     ← Verify docs exist
-│   ├── check-formatting.yml        ← Prettier, ESLint, Checkstyle
-│   ├── check-build.yml             ← Frontend & backend build
-│   ├── check-tests.yml             ← Run tests (future)
-│   └── pr-requirements.yml         ← Master workflow (calls others)
-└── scripts/
-    └── validate-documentation.sh   ← Reusable doc validation script
+└── workflows/
+    ├── check-documentation.yml    ← New
+    └── check-formatting.yml       ← New
+
+.prettierrc.json                    ← New (Frontend)
+
+docs/features/
+├── task-completion.md             ← Already exists
+└── [new-features].md              ← Future features
 ```
 
 ---
 
-## 5. PR Merge Requirements
+## 5. Simple Implementation Plan
 
-Configure GitHub branch protection rules:
+### Step 1: Create Workflows
+- [ ] Create `.github/workflows/` directory
+- [ ] Create `check-documentation.yml`
+- [ ] Create `check-formatting.yml`
 
-**Master branch requirements:**
-- ✅ All status checks pass (all workflows)
-- ✅ PR approved by at least 1 reviewer
-- ✅ Branch up to date with master
-- ✅ No merge commits (squash or rebase)
+### Step 2: Add Configuration
+- [ ] Create `.prettierrc.json`
+- [ ] Update `frontend/package.json` with lint script
 
-**Automated checks status:**
-- 🔴 Documentation Check (for feat/*)
-- 🔴 Formatting Check (frontend + backend)
-- 🔴 Build Check (frontend + backend)
-- 🔴 Tests Check (when added)
+### Step 3: Test
+- [ ] Test documentation check on a feature branch
+- [ ] Test formatting check with bad formatting
+- [ ] Verify helpful error messages
 
----
-
-## 6. Implementation Phases
-
-### Phase 1: Core Workflows (Priority: High)
-- [ ] Create documentation check workflow
-- [ ] Create formatting check workflow (Prettier + ESLint)
-- [ ] Create build check workflow
-- [ ] Add `.prettierrc.json` and `.eslintrc.json`
-- [ ] Update `package.json` with lint scripts
-- [ ] Test workflows locally
-
-### Phase 2: Backend Checks (Priority: Medium)
-- [ ] Add Checkstyle configuration
-- [ ] Add SpotBugs plugin to pom.xml
-- [ ] Create backend build validation
-- [ ] Test backend workflows
-
-### Phase 3: Advanced Features (Priority: Low)
-- [ ] Code coverage reporting
-- [ ] Performance benchmarks
-- [ ] Security scanning (OWASP, Snyk)
-- [ ] Automated PR comments with results
-- [ ] Auto-fix suggestions (prettier --write)
-
-### Phase 4: Branch Protection (Priority: High)
-- [ ] Configure GitHub branch protection rules
-- [ ] Set required status checks
-- [ ] Require PR approval
-- [ ] Require branch to be up to date
+### Step 4: Finalize
+- [ ] Document in feature docs
+- [ ] Merge to master
+- [ ] Verify workflows run on next PR
 
 ---
 
-## 7. Benefits & Expected Outcomes
+## 6. What Gets Checked
 
-**What this solves:**
-- ❌ Manually checking documentation existence → ✅ Automatic validation
-- ❌ Code formatting inconsistencies → ✅ Prettier enforces style
-- ❌ Linting issues spotted during review → ✅ Caught before review
-- ❌ Broken builds merged → ✅ Build must pass
-- ❌ Different developers, different styles → ✅ Consistent standards
+### Documentation Check
+✅ **Runs on:** `feat/*` branches only  
+✅ **Checks:** File exists + has required sections  
+✅ **Fails:** If docs missing or incomplete  
 
-**Metrics:**
-- Reduce PR review time by ~30% (automated checks done first)
-- Catch formatting issues in seconds vs. minutes of review
-- Zero broken builds on master
-- Better code quality across the board
+### Formatting Check
+✅ **Runs on:** All PRs  
+✅ **Checks:** Code formatting (Prettier)  
+✅ **Fails:** If formatting doesn't match rules  
 
 ---
 
-## 8. Risk Mitigation
+## 7. Benefits
 
-**Potential Issues:**
-
-1. **Workflow takes too long to run**
-   - Solution: Run checks in parallel
-   - Set reasonable timeouts (e.g., 10 min max)
-
-2. **False positives (legitimate code fails check)**
-   - Solution: Review linter rules carefully
-   - Allow overrides in specific cases with justification
-
-3. **Documentation check is too strict**
-   - Solution: Allow flexible section naming
-   - Focus on presence, not perfection
-
-4. **Breaking changes to existing PRs**
-   - Solution: Apply rules only to new PRs
-   - Use GitHub "Require branches to be up to date" carefully
+- 📋 **No more missing documentation** on feature PRs
+- 🎨 **Consistent formatting** across codebase
+- ⏱️ **Faster reviews** (don't need to check these manually)
+- 💬 **Clear feedback** when checks fail
 
 ---
 
-## 9. Testing the Workflows
+## 8. Future Enhancements (Later)
 
-**Before merging:**
-1. Create test branch with intentional issues
-2. Verify each check catches the issue
-3. Verify each check passes when fixed
-4. Verify error messages are helpful
-5. Test branch protection rules
-
-**Test scenarios:**
-- [ ] Missing documentation → Workflow fails ✓
-- [ ] Bad formatting → Prettier check fails ✓
-- [ ] Linting errors → ESLint fails ✓
-- [ ] Build errors → Build fails ✓
-- [ ] All checks pass → PR green ✓
+Not in this phase, but can add later:
+- Build validation
+- Test execution
+- Code coverage
+- Linting (ESLint, Checkstyle)
+- Branch protection rules
 
 ---
 
-## 10. Documentation for This Feature
+## Implementation Effort
 
-When implementing, document in:
-- **`docs/features/github-actions.md`** — Complete technical design
-- **`README.md`** — Add "CI/CD" section
-- **`.github/workflows/*.yml`** — Add comments in each workflow
-- **Contributing guidelines** (future) — How to pass checks locally
+**Estimate:** 2-3 hours  
+**Complexity:** Low  
+**Risk:** Very Low  
 
 ---
 
-## 11. Next Steps (Implementation Order)
-
-1. ✅ Create feature branch: `feat/github-actions` (DONE)
-2. ✅ Create planning document (THIS FILE)
-3. [ ] Create `.github/workflows/` directory
-4. [ ] Create documentation check workflow
-5. [ ] Create formatting check workflow
-6. [ ] Add Prettier & ESLint config
-7. [ ] Create build validation workflow
-8. [ ] Test all workflows
-9. [ ] Add branch protection rules
-10. [ ] Create feature documentation
-11. [ ] Merge to master
-12. [ ] Verify workflows run on next PR
-
----
-
-## 12. Questions & Decisions
-
-**Decisions needed:**
-- [ ] Should we auto-fix formatting (prettier --write) or just report?
-- [ ] Should all checks block merge or just some?
-- [ ] Do we want code coverage reports?
-- [ ] Do we want performance benchmarks?
-- [ ] Which linting rules are must-have vs. nice-to-have?
-
-**Recommendations:**
-- Auto-fix formatting: YES (improves DX)
-- All checks block merge: YES (ensures quality)
-- Code coverage: LATER (add after tests)
-- Performance: LATER (after optimization needs arise)
-- Linting: Focus on correctness, not style (use Prettier for style)
-
----
-
-## Summary
-
-This plan will implement:
-- 📋 **Documentation Validation** — Ensure feature branches have docs
-- 🎨 **Code Formatting** — Prettier for consistent style
-- ✅ **Linting** — ESLint (frontend) + Checkstyle (backend)
-- 🔨 **Build Validation** — Ensure code compiles
-- 🛡️ **Branch Protection** — Enforce quality standards
-
-**Effort Estimate:** 3-4 hours for implementation + testing
-
-**Impact:** High — Significantly improves code quality and review speed
-
----
-
-**Document Status:** Planning  
-**Last Updated:** May 2026  
-**Next Review:** After implementation
+**Status:** Ready for implementation  
+**Last Updated:** May 2026
