@@ -1,12 +1,12 @@
 #!/bin/bash
 
-set -e
-
 echo "━━━ TaskEcho Health Check ━━━"
 echo ""
 
 BACKEND_URL="http://localhost:8080/tasks"
 FRONTEND_URL="http://localhost:3000"
+
+HEALTHY=true
 
 # Backend health check
 echo "Checking backend (localhost:8080)..."
@@ -17,7 +17,7 @@ if curl -s "$BACKEND_URL" > /dev/null 2>&1; then
 else
   echo "✗ Backend is not responding"
   echo "  Try: cd backend && mvn spring-boot:run"
-  exit 1
+  HEALTHY=false
 fi
 
 echo ""
@@ -29,8 +29,15 @@ if curl -s "$FRONTEND_URL" > /dev/null 2>&1; then
 else
   echo "✗ Frontend is not responding"
   echo "  Try: cd frontend && npm run dev"
-  exit 1
+  HEALTHY=false
 fi
 
 echo ""
-echo "━━━ All systems operational ━━━"
+
+if [ "$HEALTHY" = true ]; then
+  echo "━━━ All systems operational ━━━"
+  exit 0
+else
+  echo "━━━ Some services are down ━━━"
+  exit 1
+fi
