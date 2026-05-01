@@ -1,54 +1,44 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { Task } from "./types";
 
-const MOCK_TASKS: Task[] = [
-  {
-    id: "1",
-    title: "Set up monorepo structure",
-    status: "COMPLETED",
-    createdAt: "2026-05-01T08:00:00Z",
-    completedAt: "2026-05-01T09:00:00Z",
-    completionNote: "Done via Claude Code",
-  },
-  {
-    id: "2",
-    title: "Build Spring Boot backend",
-    status: "COMPLETED",
-    createdAt: "2026-05-01T09:00:00Z",
-    completedAt: "2026-05-01T10:00:00Z",
-    completionNote: null,
-  },
-  {
-    id: "3",
-    title: "Build Next.js frontend",
-    status: "PENDING",
-    createdAt: "2026-05-01T10:00:00Z",
-    completedAt: null,
-    completionNote: null,
-  },
-];
+const API = "http://localhost:8080/tasks";
 
 export default function Home() {
-  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
-  const [input, setInput] = useState("");
+  const [tasks, setTasks]     = useState<Task[]>([]);
+  const [input, setInput]     = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState<string | null>(null);
 
-  function addTask() {
+  useEffect(() => {
+    fetch(API)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        return res.json() as Promise<Task[]>;
+      })
+      .then(setTasks)
+      .catch((err: Error) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function addTask() {
     const title = input.trim();
     if (!title) return;
 
-    const task: Task = {
-      id: crypto.randomUUID(),
-      title,
-      status: "PENDING",
-      createdAt: new Date().toISOString(),
-      completedAt: null,
-      completionNote: null,
-    };
-
-    setTasks((prev) => [task, ...prev]);
-    setInput("");
+    try {
+      const res = await fetch(API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const created = (await res.json()) as Task;
+      setTasks((prev) => [created, ...prev]);
+      setInput("");
+    } catch (err) {
+      setError((err as Error).message);
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -77,10 +67,16 @@ export default function Home() {
         </button>
       </div>
 
+      {/* Feedback */}
+      {error   && <p style={{ color: "#dc2626", marginBottom: 16 }}>Error: {error}</p>}
+      {loading && <p style={{ color: "#888" }}>Loading tasks…</p>}
+
       {/* Task list */}
-      {tasks.length === 0 ? (
+      {!loading && !error && tasks.length === 0 && (
         <p style={{ color: "#888" }}>No tasks yet. Add one above.</p>
-      ) : (
+      )}
+
+      {tasks.length > 0 && (
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
           {tasks.map((task) => (
             <li
