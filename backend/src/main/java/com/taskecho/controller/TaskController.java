@@ -29,4 +29,10 @@ public class TaskController {
     public List<Task> list() {
         return taskService.findAll();
     }
+
+    @PutMapping("/{id}")
+    public Task updateStatus(@PathVariable String id, @RequestBody Map<String, String> body) {
+        Task.Status status = Task.Status.valueOf(body.get("status").toUpperCase());
+        return taskService.updateStatus(id, status);
+    }
 }

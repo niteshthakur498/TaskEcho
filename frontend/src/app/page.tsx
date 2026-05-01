@@ -41,9 +41,32 @@ export default function Home() {
     }
   }
 
+  async function toggleTaskStatus(task: Task) {
+    const newStatus = task.status === "PENDING" ? "COMPLETED" : "PENDING";
+
+    try {
+      const res = await fetch(`${API}/${task.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const updated = (await res.json()) as Task;
+      setTasks((prev) =>
+        prev.map((t) => (t.id === task.id ? updated : t))
+      );
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") addTask();
   }
+
+  // Separate tasks by status
+  const pendingTasks = tasks.filter((task) => task.status === "PENDING");
+  const completedTasks = tasks.filter((task) => task.status === "COMPLETED");
 
   return (
     <main>
@@ -71,54 +94,100 @@ export default function Home() {
       {error   && <p style={{ color: "#dc2626", marginBottom: 16 }}>Error: {error}</p>}
       {loading && <p style={{ color: "#888" }}>Loading tasks…</p>}
 
-      {/* Task list */}
+      {/* Empty state */}
       {!loading && !error && tasks.length === 0 && (
         <p style={{ color: "#888" }}>No tasks yet. Add one above.</p>
       )}
 
-      {tasks.length > 0 && (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {tasks.map((task) => (
-            <li
-              key={task.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "12px 0",
-                borderBottom: "1px solid #eee",
-              }}
-            >
-              <span
+      {/* Pending Tasks Section */}
+      {!loading && pendingTasks.length > 0 && (
+        <section style={{ marginBottom: 48 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: "#1f2937" }}>
+            Pending Tasks ({pendingTasks.length})
+          </h2>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {pendingTasks.map((task) => (
+              <li
+                key={task.id}
                 style={{
-                  fontSize: 12,
-                  fontWeight: 600,
-                  padding: "2px 8px",
-                  borderRadius: 999,
-                  background: task.status === "COMPLETED" ? "#d1fae5" : "#fef9c3",
-                  color: task.status === "COMPLETED" ? "#065f46" : "#713f12",
-                  whiteSpace: "nowrap",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "12px 0",
+                  borderBottom: "1px solid #eee",
                 }}
               >
-                {task.status}
-              </span>
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={() => toggleTaskStatus(task)}
+                  style={{ cursor: "pointer", width: 20, height: 20 }}
+                  aria-label={`Mark ${task.title} as complete`}
+                />
 
-              <span
+                <span
+                  style={{
+                    flex: 1,
+                    color: "inherit",
+                  }}
+                >
+                  {task.title}
+                </span>
+
+                <span style={{ fontSize: 12, color: "#9ca3af", whiteSpace: "nowrap" }}>
+                  {new Date(task.createdAt).toLocaleDateString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Completed Tasks Section */}
+      {!loading && completedTasks.length > 0 && (
+        <section>
+          <h2 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: "#1f2937" }}>
+            Completed Tasks ({completedTasks.length})
+          </h2>
+          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+            {completedTasks.map((task) => (
+              <li
+                key={task.id}
                 style={{
-                  flex: 1,
-                  textDecoration: task.status === "COMPLETED" ? "line-through" : "none",
-                  color: task.status === "COMPLETED" ? "#9ca3af" : "inherit",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "12px 0",
+                  borderBottom: "1px solid #eee",
                 }}
               >
-                {task.title}
-              </span>
+                <input
+                  type="checkbox"
+                  checked={true}
+                  onChange={() => toggleTaskStatus(task)}
+                  style={{ cursor: "pointer", width: 20, height: 20 }}
+                  aria-label={`Mark ${task.title} as pending`}
+                />
 
-              <span style={{ fontSize: 12, color: "#9ca3af", whiteSpace: "nowrap" }}>
-                {new Date(task.createdAt).toLocaleDateString()}
-              </span>
-            </li>
-          ))}
-        </ul>
+                <span
+                  style={{
+                    flex: 1,
+                    textDecoration: "line-through",
+                    color: "#9ca3af",
+                  }}
+                >
+                  {task.title}
+                </span>
+
+                <span style={{ fontSize: 12, color: "#9ca3af", whiteSpace: "nowrap" }}>
+                  {task.completedAt
+                    ? new Date(task.completedAt).toLocaleDateString()
+                    : new Date(task.createdAt).toLocaleDateString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </main>
   );
