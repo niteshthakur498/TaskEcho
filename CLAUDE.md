@@ -178,18 +178,140 @@ misc fixes
 
 ## 5. Pull Request / Merge Request Rules
 
-- **Title** follows the same Conventional Commits format as a commit subject.
-- **Description** must include:
-  - What changed and why.
-  - How to test it.
-  - Screenshots or recordings for any UI changes.
-  - Links to related issues or tickets.
-- Keep PRs **small and focused** — one concern per PR.
-- PRs with more than ~400 changed lines should be split unless unavoidable.
-- Resolve or reply to **every review comment** before merging.
-- Do not merge your own PR without at least one reviewer approval (unless working solo).
-- Squash merge or rebase merge to keep history linear — follow project convention.
-- Delete the branch after merging.
+### 5.1 PR Title
+- **Format:** Follow Conventional Commits: `<type>(<scope>): <short-description>`
+- **Examples:** 
+  - `feat(auth): add OAuth2 login`
+  - `fix(api): handle null task ID correctly`
+  - `docs: update installation guide`
+- Keep under **70 characters**
+- Use imperative mood, no period at the end
+
+### 5.2 PR Description Template
+
+Every PR **must** follow this structure:
+
+```markdown
+## Summary
+[2–3 sentences describing what this PR does and why]
+
+## Changes
+
+### Frontend (if applicable)
+- Bullet list of UI/component changes
+- New components or pages
+- State management changes
+
+### Backend (if applicable)
+- API endpoints added/modified
+- Service layer changes
+- Database schema changes
+
+### Documentation
+- New documentation files created
+- Updates to existing documentation
+- Changes to code comments/docstrings
+
+## Technical Details
+
+**Files Modified:**
+- `path/to/file1.ts`
+- `path/to/file2.ts`
+
+**Files Created:**
+- `path/to/new-file.ts`
+
+**API Changes (if applicable):**
+- `POST /endpoint` — Description
+- `PUT /endpoint/{id}` — Description
+
+**Breaking Changes (if any):**
+- List any breaking changes
+- Include migration steps if applicable
+
+## Testing
+
+- [ ] Unit tests added/updated
+- [ ] Integration tests added/updated
+- [ ] Manual testing completed
+- [ ] Edge cases covered
+
+**How to Test:**
+1. Step-by-step instructions
+2. Expected behavior
+3. How to verify the fix/feature works
+
+## Related Issues
+- Closes #123
+- Fixes #456
+- Relates to #789
+
+## Screenshots/Videos (if UI changes)
+[Add screenshots or GIFs showing the changes]
+
+## Checklist
+- [ ] Code follows project style guidelines
+- [ ] Documentation is updated
+- [ ] No breaking changes (or documented)
+- [ ] All tests pass
+- [ ] No hardcoded values or secrets
+```
+
+### 5.3 PR Description Standards
+
+**Summary Section:**
+- Write **2–3 sentences** that clearly explain what the PR does
+- Answer: "What problem does this solve?" or "What feature does this add?"
+- Avoid jargon — write for someone unfamiliar with the context
+
+**Changes Section:**
+- Organize by layer: Frontend, Backend, Documentation
+- Use **bullet points** for readability
+- Be specific: "Add checkbox for task completion" not "Add UI changes"
+- Include both what changed and why
+
+**Technical Details Section:**
+- List **all files** modified and created (for reviewer context)
+- Include **API endpoint** specifications if applicable
+- Document **breaking changes** explicitly with migration steps
+- Use **tables** for complex comparisons
+
+**Testing Section:**
+- Provide **step-by-step instructions** to test the feature
+- Include **expected behavior** at each step
+- List **edge cases** tested
+- Provide **terminal commands** if needed (e.g., curl requests)
+
+**Content Requirements:**
+- ✅ DO explain the "why" behind changes
+- ✅ DO link to related issues/tickets
+- ✅ DO include code examples for complex changes
+- ✅ DO add screenshots for UI changes
+- ❌ DON'T just repeat commit messages
+- ❌ DON'T leave placeholder text
+- ❌ DON'T include unrelated changes
+- ❌ DON'T add secrets or credentials
+
+### 5.4 Code Review & Approval
+
+- Keep PRs **small and focused** — one concern per PR
+- PRs with more than ~400 changed lines should be split unless unavoidable
+- Request reviews from:
+  - **Frontend changes:** Frontend specialists
+  - **Backend changes:** Backend specialists
+  - **Documentation changes:** Anyone (documentation is everyone's responsibility)
+  - **Breaking changes:** At least one other senior developer
+- Do not merge your own PR without at least one reviewer approval (unless working solo)
+- Resolve or reply to **every review comment** before merging
+- Request new review after making changes
+
+### 5.5 Merging
+
+- Use **squash and merge** for feature branches (clean, linear history)
+- Use **rebase and merge** for hotfixes (preserves single commit)
+- Use **create a merge commit** only for long-lived release branches
+- **Delete the branch** after merging (GitHub offers this automatically)
+- Verify CI/CD pipeline passes before merging
 
 ---
 
