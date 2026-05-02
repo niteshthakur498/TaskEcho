@@ -558,45 +558,6 @@ export default function Home() {
                         {/* Main task row */}
                         <div className="px-3 py-3.5 flex items-center gap-2">
 
-                          {/* 3-dot menu */}
-                          <div className="relative flex-shrink-0">
-                            <button
-                              onClick={e => {
-                                e.stopPropagation();
-                                setActiveMenuId(prev => prev === task.id ? null : task.id);
-                              }}
-                              className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors"
-                              aria-label="Task options"
-                            >
-                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                <circle cx="12" cy="5" r="1.5" />
-                                <circle cx="12" cy="12" r="1.5" />
-                                <circle cx="12" cy="19" r="1.5" />
-                              </svg>
-                            </button>
-                            {activeMenuId === task.id && (
-                              <div
-                                className="absolute left-0 top-7 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[136px]"
-                                onClick={e => e.stopPropagation()}
-                              >
-                                <button
-                                  onClick={e => {
-                                    e.stopPropagation();
-                                    setAddingSubtaskForId(task.id);
-                                    setSubtaskInput("");
-                                    setActiveMenuId(null);
-                                  }}
-                                  className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
-                                >
-                                  <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                                  </svg>
-                                  Add Subtask
-                                </button>
-                              </div>
-                            )}
-                          </div>
-
                           {/* Completion checkbox */}
                           <button
                             onClick={() => isConfirming ? cancelConfirm() : requestComplete(task)}
@@ -628,6 +589,45 @@ export default function Home() {
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${PRIORITY_COLOR[task.priority]}`}>
                             {PRIORITY_LABEL[task.priority]}
                           </span>
+
+                          {/* 3-dot menu */}
+                          <div className="relative flex-shrink-0">
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                setActiveMenuId(prev => prev === task.id ? null : task.id);
+                              }}
+                              className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors"
+                              aria-label="Task options"
+                            >
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <circle cx="12" cy="5" r="1.5" />
+                                <circle cx="12" cy="12" r="1.5" />
+                                <circle cx="12" cy="19" r="1.5" />
+                              </svg>
+                            </button>
+                            {activeMenuId === task.id && (
+                              <div
+                                className="absolute right-0 top-8 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[136px]"
+                                onClick={e => e.stopPropagation()}
+                              >
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    setAddingSubtaskForId(task.id);
+                                    setSubtaskInput("");
+                                    setActiveMenuId(null);
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                >
+                                  <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                  </svg>
+                                  Add Subtask
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         {/* Subtasks section */}
@@ -790,7 +790,7 @@ export default function Home() {
                             </svg>
                           </button>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-400 line-through truncate">{task.title}</p>
+                            <p className="text-sm text-gray-400 truncate">{task.title}</p>
                             <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
                               <span>✓</span>
                               {task.completedAt ? fmtDate(task.completedAt) : fmtDate(task.createdAt)}
