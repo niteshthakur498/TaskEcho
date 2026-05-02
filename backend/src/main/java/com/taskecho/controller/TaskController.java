@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
 @RestController
 @RequestMapping("/tasks")
 public class TaskController {
@@ -22,7 +22,11 @@ public class TaskController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Task create(@RequestBody Map<String, String> body) {
-        return taskService.create(body.get("title"));
+        String title = body.get("title");
+        Task.Priority priority = body.containsKey("priority")
+            ? Task.Priority.valueOf(body.get("priority").toUpperCase())
+            : Task.Priority.MEDIUM;
+        return taskService.create(title, priority);
     }
 
     @GetMapping
@@ -31,8 +35,18 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public Task updateStatus(@PathVariable String id, @RequestBody Map<String, String> body) {
-        Task.Status status = Task.Status.valueOf(body.get("status").toUpperCase());
-        return taskService.updateStatus(id, status);
+    public Task update(@PathVariable String id, @RequestBody Map<String, String> body) {
+        Task.Status status = body.containsKey("status")
+            ? Task.Status.valueOf(body.get("status").toUpperCase())
+            : null;
+        Task.Priority priority = body.containsKey("priority")
+            ? Task.Priority.valueOf(body.get("priority").toUpperCase())
+            : null;
+        return taskService.update(id, status, priority);
+    }
+
+    @GetMapping("/stats/weekly")
+    public List<Map<String, Object>> weeklyStats() {
+        return taskService.getWeeklyStats();
     }
 }
