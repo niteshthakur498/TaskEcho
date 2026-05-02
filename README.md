@@ -98,9 +98,12 @@ curl -s -X POST http://localhost:8080/tasks \
   "id": "a1b2c3...",
   "title": "My first task",
   "status": "PENDING",
+  "priority": "MEDIUM",
   "createdAt": "2026-05-01T10:00:00Z",
   "completedAt": null,
-  "completionNote": null
+  "completionNote": null,
+  "tags": [],
+  "subtasks": []
 }
 ```
 
@@ -108,6 +111,28 @@ curl -s -X POST http://localhost:8080/tasks \
 
 ```bash
 curl -s http://localhost:8080/tasks | jq
+```
+
+### Add a subtask
+
+```bash
+curl -s -X POST http://localhost:8080/tasks/{id}/subtasks \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Write unit tests"}' | jq
+```
+
+### Toggle subtask completion
+
+```bash
+curl -s -X PUT http://localhost:8080/tasks/{id}/subtasks/{subtaskId} \
+  -H "Content-Type: application/json" \
+  -d '{"status": "COMPLETED"}' | jq
+```
+
+### Delete a subtask
+
+```bash
+curl -s -X DELETE http://localhost:8080/tasks/{id}/subtasks/{subtaskId} | jq
 ```
 
 ## Troubleshooting

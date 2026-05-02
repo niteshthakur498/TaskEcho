@@ -85,6 +85,29 @@ This document tracks all features implemented in TaskEcho, their status, and whe
 
 ---
 
+### 5. Subtasks
+**Status:** In Development  
+**Version:** 1.5.0  
+**Branch:** `feat/subtasks`  
+**Date:** May 2026
+
+**Features:**
+- Add subtasks to any pending task via a 3-dot menu (⋮) on the task card
+- Toggle individual subtask completion (checkbox + strikethrough)
+- Completing the main task auto-completes all pending subtasks
+- Subtask progress counter (`x/y subtasks`) in the task meta line
+- Inline warning when completing a task with pending subtasks
+- Completed tasks show all subtasks in the "More details" section
+
+**Details:** [Subtasks Feature](features/subtasks.md)
+
+**API Changes:**
+- New: `POST /tasks/{id}/subtasks` — Add a subtask to a task
+- New: `PUT /tasks/{id}/subtasks/{subtaskId}` — Toggle subtask completion
+- New: `DELETE /tasks/{id}/subtasks/{subtaskId}` — Remove a subtask
+
+---
+
 ## 🚀 Upcoming Features
 
 ### Task Deletion
@@ -194,8 +217,9 @@ When proposing a new feature:
 | 1.2.0 | TBD | Task deletion | Planned |
 | 1.3.0 | TBD | Task editing | Planned |
 | 1.4.0 | May 2026 | Task tagging (max 3, expandable details) | In Development |
-| 1.5.0 | TBD | Advanced filtering | Planned |
-| 1.6.0 | TBD | Priority levels | Planned |
+| 1.5.0 | May 2026 | Subtasks (nested checklist per task) | In Development |
+| 1.6.0 | TBD | Advanced filtering | Planned |
+| 1.7.0 | TBD | Priority levels | Planned |
 | 2.0.0 | TBD | Recurring tasks | Planned |
 
 ---
