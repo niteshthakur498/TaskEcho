@@ -110,7 +110,7 @@ function SubtaskRow({
       <button
         onClick={() => onToggle(taskId, subtask)}
         className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
-          done ? "border-emerald-600 bg-emerald-600" : "border-border-default hover:border-accent"
+          done ? "border-emerald-500 bg-emerald-500" : "border-border-default hover:border-accent"
         }`}
         aria-label={done ? `Undo subtask: ${subtask.title}` : `Complete subtask: ${subtask.title}`}
       >
@@ -422,7 +422,7 @@ export default function Home() {
         </div>
 
         {/* Left fade overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0f0d18]/95 via-[#0f0d18]/65 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/80 via-indigo-900/40 to-transparent" />
 
         <div className="relative z-10 h-full flex flex-col justify-center px-6 sm:px-10">
           <h2 className="text-2xl sm:text-3xl font-bold text-text-primary leading-tight tracking-tight">
@@ -482,7 +482,7 @@ export default function Home() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                className="w-full text-sm text-text-primary placeholder-text-muted bg-transparent outline-none"
+                className="w-full text-base text-text-primary placeholder-text-muted bg-transparent outline-none"
                 disabled={loading}
               />
             </div>
@@ -641,7 +641,7 @@ export default function Home() {
                                   if (e.key === "Escape") setEditingTaskId(null);
                                 }}
                                 onBlur={() => saveTaskEdit(task.id)}
-                                className="w-full text-sm font-medium text-text-primary bg-surface-2 border border-accent/40 rounded-lg px-2.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-accent"
+                                className="w-full text-base font-medium text-text-primary bg-surface-2 border border-accent/40 rounded-lg px-2.5 py-1 focus:outline-none focus:ring-1 focus:ring-accent"
                               />
                             ) : (
                               <p className={t.taskTitle}>{task.title}</p>
@@ -909,7 +909,7 @@ export default function Home() {
                           </button>
 
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-text-muted line-through truncate">{task.title}</p>
+                            <p className="text-base text-text-muted line-through truncate">{task.title}</p>
                             <p className={t.taskMeta}>
                               <span>✓</span>
                               {task.completedAt ? fmtDate(task.completedAt) : fmtDate(task.createdAt)}
@@ -969,7 +969,7 @@ export default function Home() {
                                     <div className="space-y-1.5">
                                       {task.subtasks.map(st => (
                                         <div key={st.id} className="flex items-center gap-2">
-                                          <div className="w-4 h-4 rounded border-2 border-emerald-600 bg-emerald-600 flex-shrink-0 flex items-center justify-center">
+                                          <div className="w-4 h-4 rounded border-2 border-emerald-500 bg-emerald-500 flex-shrink-0 flex items-center justify-center">
                                             <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                             </svg>
@@ -1025,7 +1025,7 @@ export default function Home() {
                       <div key={day.day} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
                         <div
                           className={`w-full relative rounded-t-md overflow-hidden transition-all duration-500 ${
-                            day.isToday ? "bg-accent-muted" : "bg-surface-3"
+                            day.isToday ? "bg-indigo-100" : "bg-surface-3"
                           }`}
                           style={{ height: `${Math.max(createdH, day.created > 0 ? 8 : 4)}%` }}
                         >
@@ -1056,15 +1056,15 @@ export default function Home() {
             </div>
 
             {/* Efficiency */}
-            <div className="bg-accent-muted rounded-2xl border border-accent/20 p-5">
-              <p className="section-label mb-2">Efficiency</p>
-              <p className="text-3xl font-bold text-text-primary tracking-tight">
+            <div className="bg-accent rounded-2xl border border-accent/10 p-5">
+              <p className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-2">Efficiency</p>
+              <p className="text-3xl font-bold text-white tracking-tight">
                 {tasks.length > 0 ? Math.round((completed.length / tasks.length) * 100) : 0}%
               </p>
-              <p className="text-xs text-text-secondary mt-1">tasks completed</p>
-              <div className="mt-4 bg-surface-3/50 rounded-full h-1.5">
+              <p className="text-xs text-white/60 mt-1">tasks completed</p>
+              <div className="mt-4 bg-white/20 rounded-full h-1.5">
                 <div
-                  className="bg-accent rounded-full h-1.5 transition-all duration-700"
+                  className="bg-white rounded-full h-1.5 transition-all duration-700"
                   style={{ width: `${tasks.length > 0 ? (completed.length / tasks.length) * 100 : 0}%` }}
                 />
               </div>

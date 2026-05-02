@@ -9,34 +9,34 @@ module.exports = {
     extend: {
       // ── Dark matte design tokens ─────────────────────────────────────────
       colors: {
-        // Surfaces (darkest → lightest)
-        'surface-bg': '#0c0c0e',
-        'surface-1':  '#131315',
-        'surface-2':  '#1b1b1e',
-        'surface-3':  '#242428',
+        // Surfaces — light, airy, white-forward
+        'surface-bg': '#f0f2f7',   // page canvas — soft blue-gray, not stark white
+        'surface-1':  '#ffffff',   // cards — pure white, pops against bg
+        'surface-2':  '#f4f6fb',   // inputs, secondary surfaces
+        'surface-3':  '#e8ecf5',   // hover states
 
-        // Borders
-        'border-default': '#2a2a2f',
-        'border-subtle':  '#1f1f23',
+        // Borders — crisp but not harsh
+        'border-default': '#dce1ef',
+        'border-subtle':  '#eaecf5',
 
-        // Text hierarchy
-        'text-primary':   '#e4e4e8',
-        'text-secondary': '#8a8a9a',
-        'text-muted':     '#4a4a58',
+        // Text — high contrast on white cards
+        'text-primary':   '#0f1120',   // near-black with slight blue — sharp on white
+        'text-secondary': '#4a5270',   // mid-tone slate — readable secondary
+        'text-muted':     '#9199b8',   // soft muted for placeholders / chrome
 
-        // Accent (muted indigo/violet — readable on dark)
-        'accent':       '#7c72f0',
-        'accent-hover': '#6c62e8',
-        'accent-muted': '#1d1a38',
-        'accent-text':  '#b0aaf8',
+        // Accent — indigo
+        'accent':       '#5254e7',
+        'accent-hover': '#4345d4',
+        'accent-muted': '#eef0ff',
+        'accent-text':  '#3c3eb8',
 
-        // Success (for completed tasks)
-        'success-muted': '#0e2018',
+        // Success (completed tasks)
+        'success-muted': '#f0fdf4',
 
-        // Danger (delete / error)
-        'danger':       '#e06060',
-        'danger-muted': '#261414',
-        'danger-text':  '#f09090',
+        // Danger
+        'danger':       '#e03c3c',
+        'danger-muted': '#fff1f1',
+        'danger-text':  '#b91c1c',
       },
 
       // ── Animations ────────────────────────────────────────────────────────

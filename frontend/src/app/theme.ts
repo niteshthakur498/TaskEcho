@@ -7,23 +7,23 @@
 export const t = {
   // ── Priority badge colours (text + bg for dark surfaces) ─────────────────
   priority: {
-    HIGH:   "text-rose-400   bg-rose-950/50   border border-rose-800/30",
-    MEDIUM: "text-indigo-300 bg-indigo-950/50 border border-indigo-800/30",
-    LOW:    "text-emerald-400 bg-emerald-950/50 border border-emerald-800/30",
+    HIGH:   "text-red-600    bg-red-50    border border-red-200",
+    MEDIUM: "text-indigo-600 bg-indigo-50 border border-indigo-200",
+    LOW:    "text-emerald-600 bg-emerald-50 border border-emerald-200",
   } as const,
 
   // ── Tag pill colour palette (cycles by index) ─────────────────────────────
   tagColors: [
-    "bg-violet-950/60 text-violet-300 border-violet-800/30",
-    "bg-sky-950/60    text-sky-300    border-sky-800/30",
-    "bg-amber-950/60  text-amber-300  border-amber-800/30",
-    "bg-rose-950/60   text-rose-300   border-rose-800/30",
-    "bg-teal-950/60   text-teal-300   border-teal-800/30",
+    "bg-violet-50 text-violet-700 border-violet-200",
+    "bg-sky-50    text-sky-700    border-sky-200",
+    "bg-amber-50  text-amber-700  border-amber-200",
+    "bg-rose-50   text-rose-700   border-rose-200",
+    "bg-teal-50   text-teal-700   border-teal-200",
   ] as const,
 
   // ── Cards ─────────────────────────────────────────────────────────────────
   cardPending:   "bg-surface-1 rounded-2xl border border-border-default shadow-lg shadow-black/30 transition-all duration-200",
-  cardCompleted: "bg-success-muted rounded-2xl border border-emerald-900/30 transition-all duration-200",
+  cardCompleted: "bg-success-muted rounded-2xl border border-emerald-200 transition-all duration-200",
 
   // ── Filter / toggle pills ─────────────────────────────────────────────────
   pillActive:   "bg-accent text-white border-accent",
@@ -33,7 +33,7 @@ export const t = {
   iconBtn: "flex items-center justify-center rounded-lg transition-colors text-text-muted hover:text-text-primary hover:bg-surface-3",
 
   // ── Dropdown menu shell ───────────────────────────────────────────────────
-  menuShell: "absolute right-0 top-8 z-20 bg-surface-2 border border-border-default rounded-xl shadow-2xl shadow-black/50 py-1.5 min-w-[152px]",
+  menuShell: "absolute right-0 top-8 z-20 bg-white border border-border-default rounded-xl shadow-xl shadow-black/10 py-1.5 min-w-[152px]",
   menuItem:  "w-full text-left px-3.5 py-2 text-xs text-text-secondary hover:bg-surface-3 hover:text-text-primary flex items-center gap-2 transition-colors",
   menuItemDanger: "w-full text-left px-3.5 py-2 text-xs text-danger hover:bg-danger-muted flex items-center gap-2 transition-colors",
 
@@ -45,13 +45,13 @@ export const t = {
   // ── Checkbox styles ───────────────────────────────────────────────────────
   checkboxPending:    "w-5 h-5 rounded border-2 border-border-default hover:border-accent flex-shrink-0 transition-colors",
   checkboxConfirming: "w-5 h-5 rounded border-2 border-accent bg-accent/20 flex-shrink-0 transition-colors",
-  checkboxDone:       "w-5 h-5 rounded border-2 border-emerald-600 bg-emerald-600 flex-shrink-0 flex items-center justify-center transition-colors hover:bg-emerald-500",
+  checkboxDone:       "w-5 h-5 rounded border-2 border-emerald-500 bg-emerald-500 flex-shrink-0 flex items-center justify-center transition-colors hover:bg-emerald-400",
 
   // ── Typography ────────────────────────────────────────────────────────────
   pageTitle:   "text-2xl sm:text-3xl font-bold text-text-primary tracking-tight",
-  taskTitle:   "text-sm font-medium text-text-primary truncate",
-  taskMeta:    "text-xs text-text-muted mt-1 flex items-center gap-1.5",
-  detailLabel: "text-xs text-text-muted font-medium mb-2",
+  taskTitle:   "text-base font-medium text-text-primary truncate",
+  taskMeta:    "text-sm text-text-secondary mt-1.5 flex items-center gap-1.5",
+  detailLabel: "text-xs font-semibold text-text-muted uppercase tracking-wide mb-2",
 } as const;
 
 /** Returns the tag pill colour class for a given index. */
