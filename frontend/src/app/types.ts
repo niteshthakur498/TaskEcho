@@ -9,6 +9,7 @@ export interface Task {
   createdAt:      string;
   completedAt:    string | null;
   completionNote: string | null;
+  tags:           string[];
 }
 
 export interface DayStat {
