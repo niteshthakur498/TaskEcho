@@ -49,8 +49,8 @@ export const t = {
 
   // ── Typography ────────────────────────────────────────────────────────────
   pageTitle:   "text-2xl sm:text-3xl font-bold text-text-primary tracking-tight",
-  taskTitle:   "text-base font-medium text-text-primary truncate",
-  taskMeta:    "text-sm text-text-secondary mt-1.5 flex items-center gap-1.5",
+  taskTitle:   "text-[17px] font-medium text-text-primary truncate",
+  taskMeta:    "text-[13px] text-text-secondary mt-1.5 flex items-center gap-1.5",
   detailLabel: "text-xs font-semibold text-text-muted uppercase tracking-wide mb-2",
 } as const;
 
