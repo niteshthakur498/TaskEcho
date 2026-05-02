@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import type { Task, Subtask, TaskPriority, DayStat } from "./types";
+import { t, tagColor } from "./theme";
 
 const API = "http://localhost:8080/tasks";
 const MAX_TAGS = 3;
@@ -9,7 +10,7 @@ const MAX_TAG_LENGTH = 24;
 
 function getGreeting() {
   const h = new Date().getHours();
-  if (h >= 5 && h < 12) return "Good morning";
+  if (h >= 5  && h < 12) return "Good morning";
   if (h >= 12 && h < 17) return "Good afternoon";
   if (h >= 17 && h < 21) return "Good evening";
   return "Good night";
@@ -24,32 +25,14 @@ function isToday(dateStr: string) {
 }
 
 const PRIORITY_LABEL: Record<TaskPriority, string> = {
-  HIGH: "#High",
+  HIGH:   "#High",
   MEDIUM: "#Medium",
-  LOW: "#Low",
-};
-
-const PRIORITY_COLOR: Record<TaskPriority, string> = {
-  HIGH:   "text-red-600 bg-red-50",
-  MEDIUM: "text-indigo-600 bg-indigo-50",
-  LOW:    "text-green-600 bg-green-50",
+  LOW:    "#Low",
 };
 
 const PRIORITY_ORDER: Record<TaskPriority, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
 
-// ── Tag chip colours (cycles through a palette) ────────────────────────────
-const TAG_COLORS = [
-  "bg-violet-50 text-violet-700 border-violet-200",
-  "bg-sky-50 text-sky-700 border-sky-200",
-  "bg-amber-50 text-amber-700 border-amber-200",
-  "bg-rose-50 text-rose-700 border-rose-200",
-  "bg-teal-50 text-teal-700 border-teal-200",
-];
-function tagColor(index: number) {
-  return TAG_COLORS[index % TAG_COLORS.length];
-}
-
-// ── Small reusable tag pill ────────────────────────────────────────────────
+// ── Tag chip ──────────────────────────────────────────────────────────────
 function TagPill({
   label,
   index,
@@ -78,7 +61,7 @@ function TagPill({
   );
 }
 
-// ── Single subtask row (used in pending task cards) ───────────────────────
+// ── Subtask row ───────────────────────────────────────────────────────────
 function SubtaskRow({
   subtask,
   taskId,
@@ -90,7 +73,7 @@ function SubtaskRow({
   taskId: string;
   onToggle: (taskId: string, subtask: Subtask) => void;
   onDelete: (taskId: string, subtaskId: string) => void;
-  onEdit: (taskId: string, subtaskId: string, title: string) => void;
+  onEdit:   (taskId: string, subtaskId: string, title: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [editVal, setEditVal] = useState(subtask.title);
@@ -105,31 +88,29 @@ function SubtaskRow({
 
   if (editing) {
     return (
-      <div className="flex items-center gap-2">
-        <div className="w-4 h-4 rounded border-2 border-dashed border-gray-200 flex-shrink-0" />
+      <div className="flex items-center gap-2.5">
+        <div className="w-4 h-4 rounded border-2 border-dashed border-border-default flex-shrink-0" />
         <input
           autoFocus
           value={editVal}
           onChange={e => setEditVal(e.target.value)}
           onKeyDown={e => {
-            if (e.key === "Enter") { e.preventDefault(); commitEdit(); }
+            if (e.key === "Enter")  { e.preventDefault(); commitEdit(); }
             if (e.key === "Escape") { setEditVal(subtask.title); setEditing(false); }
           }}
           onBlur={commitEdit}
-          className="flex-1 text-xs text-gray-800 bg-gray-50 border border-indigo-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          className="flex-1 text-xs text-text-primary bg-surface-2 border border-accent/40 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent"
         />
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2 group">
+    <div className="flex items-center gap-2.5 group">
       <button
         onClick={() => onToggle(taskId, subtask)}
         className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
-          done
-            ? "border-emerald-500 bg-emerald-500"
-            : "border-gray-300 hover:border-indigo-400"
+          done ? "border-emerald-600 bg-emerald-600" : "border-border-default hover:border-accent"
         }`}
         aria-label={done ? `Undo subtask: ${subtask.title}` : `Complete subtask: ${subtask.title}`}
       >
@@ -139,18 +120,22 @@ function SubtaskRow({
           </svg>
         )}
       </button>
+
       <span
         onClick={() => { if (!done) { setEditVal(subtask.title); setEditing(true); } }}
         className={`text-xs flex-1 min-w-0 truncate ${
-          done ? "line-through text-gray-400" : "text-gray-600 cursor-pointer hover:text-indigo-600"
+          done
+            ? "line-through text-text-muted"
+            : "text-text-secondary cursor-pointer hover:text-text-primary transition-colors"
         }`}
         title={done ? undefined : "Click to edit"}
       >
         {subtask.title}
       </span>
+
       <button
         onClick={() => onDelete(taskId, subtask.id)}
-        className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center text-gray-300 hover:text-red-400 transition-all text-base leading-none"
+        className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center text-text-muted hover:text-danger transition-all text-base leading-none"
         aria-label={`Delete subtask: ${subtask.title}`}
       >
         ×
@@ -159,6 +144,7 @@ function SubtaskRow({
   );
 }
 
+// ── Main page ─────────────────────────────────────────────────────────────
 export default function Home() {
   const [tasks, setTasks]               = useState<Task[]>([]);
   const [stats, setStats]               = useState<DayStat[]>([]);
@@ -174,23 +160,23 @@ export default function Home() {
   const [showAllPending, setShowAllPending] = useState(false);
 
   // ── Tag state for new task form ──────────────────────────────────────────
-  const [showDetails, setShowDetails]   = useState(false);
-  const [tagInput, setTagInput]         = useState("");
-  const [newTags, setNewTags]           = useState<string[]>([]);
-  const tagInputRef                     = useRef<HTMLInputElement>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [tagInput, setTagInput]       = useState("");
+  const [newTags, setNewTags]         = useState<string[]>([]);
+  const tagInputRef                   = useRef<HTMLInputElement>(null);
 
   // ── Expanded details per task card ──────────────────────────────────────
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
   // ── Subtask state ────────────────────────────────────────────────────────
-  const [activeMenuId, setActiveMenuId]           = useState<string | null>(null);
+  const [activeMenuId, setActiveMenuId]             = useState<string | null>(null);
   const [addingSubtaskForId, setAddingSubtaskForId] = useState<string | null>(null);
-  const [subtaskInput, setSubtaskInput]           = useState("");
+  const [subtaskInput, setSubtaskInput]             = useState("");
 
   // ── Edit / delete state ──────────────────────────────────────────────────
-  const [editingTaskId, setEditingTaskId]   = useState<string | null>(null);
-  const [editTaskInput, setEditTaskInput]   = useState("");
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [editingTaskId,    setEditingTaskId]    = useState<string | null>(null);
+  const [editTaskInput,    setEditTaskInput]    = useState("");
+  const [confirmDeleteId,  setConfirmDeleteId]  = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -210,29 +196,26 @@ export default function Home() {
     return () => document.removeEventListener("click", close);
   }, [activeMenuId]);
 
-  // ── Tag input helpers ────────────────────────────────────────────────────
+  // ── Tag helpers ──────────────────────────────────────────────────────────
   function commitTag() {
     const raw = tagInput.trim().toLowerCase().replace(/^#+/, "");
     if (!raw || newTags.length >= MAX_TAGS || newTags.includes(raw)) {
-      setTagInput("");
-      return;
+      setTagInput(""); return;
     }
-    const trimmed = raw.slice(0, MAX_TAG_LENGTH);
-    setNewTags(prev => [...prev, trimmed]);
+    setNewTags(prev => [...prev, raw.slice(0, MAX_TAG_LENGTH)]);
     setTagInput("");
   }
 
   function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter" || e.key === ",") {
-      e.preventDefault();
-      commitTag();
+      e.preventDefault(); commitTag();
     } else if (e.key === "Backspace" && tagInput === "" && newTags.length > 0) {
       setNewTags(prev => prev.slice(0, -1));
     }
   }
 
   function removeNewTag(tag: string) {
-    setNewTags(prev => prev.filter(t => t !== tag));
+    setNewTags(prev => prev.filter(tt => tt !== tag));
   }
 
   // ── Add task ─────────────────────────────────────────────────────────────
@@ -241,7 +224,7 @@ export default function Home() {
     if (!title) return;
 
     const pendingTag = tagInput.trim().toLowerCase().replace(/^#+/, "");
-    const finalTags = pendingTag && newTags.length < MAX_TAGS && !newTags.includes(pendingTag)
+    const finalTags  = pendingTag && newTags.length < MAX_TAGS && !newTags.includes(pendingTag)
       ? [...newTags, pendingTag.slice(0, MAX_TAG_LENGTH)]
       : newTags;
 
@@ -287,7 +270,7 @@ export default function Home() {
       });
       if (!res.ok) throw new Error(`${res.status}`);
       const updated = (await res.json()) as Task;
-      setTasks(prev => prev.map(t => t.id === task.id ? updated : t));
+      setTasks(prev => prev.map(tt => tt.id === task.id ? updated : tt));
       setNoteInput("");
       refreshStats();
     } catch (e) { setError((e as Error).message); }
@@ -304,14 +287,13 @@ export default function Home() {
       });
       if (!res.ok) throw new Error(`${res.status}`);
       const updated = (await res.json()) as Task;
-      setTasks(prev => prev.map(t => t.id === task.id ? updated : t));
+      setTasks(prev => prev.map(tt => tt.id === task.id ? updated : tt));
       refreshStats();
     } catch (e) { setError((e as Error).message); }
     finally { setTimeout(() => setAnimatingId(null), 300); }
   }
 
   // ── Subtask operations ────────────────────────────────────────────────────
-
   async function addSubtask(taskId: string) {
     const title = subtaskInput.trim();
     if (!title) return;
@@ -323,9 +305,8 @@ export default function Home() {
       });
       if (!res.ok) throw new Error(`${res.status}`);
       const updated = (await res.json()) as Task;
-      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+      setTasks(prev => prev.map(tt => tt.id === taskId ? updated : tt));
       setSubtaskInput("");
-      // Keep input open so user can add more
     } catch (e) { setError((e as Error).message); }
   }
 
@@ -339,18 +320,16 @@ export default function Home() {
       });
       if (!res.ok) throw new Error(`${res.status}`);
       const updated = (await res.json()) as Task;
-      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+      setTasks(prev => prev.map(tt => tt.id === taskId ? updated : tt));
     } catch (e) { setError((e as Error).message); }
   }
 
   async function deleteSubtask(taskId: string, subtaskId: string) {
     try {
-      const res = await fetch(`${API}/${taskId}/subtasks/${subtaskId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`${API}/${taskId}/subtasks/${subtaskId}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`${res.status}`);
       const updated = (await res.json()) as Task;
-      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+      setTasks(prev => prev.map(tt => tt.id === taskId ? updated : tt));
     } catch (e) { setError((e as Error).message); }
   }
 
@@ -358,7 +337,7 @@ export default function Home() {
     const title = editTaskInput.trim();
     setEditingTaskId(null);
     if (!title) return;
-    const original = tasks.find(t => t.id === taskId);
+    const original = tasks.find(tt => tt.id === taskId);
     if (!original || title === original.title) return;
     try {
       const res = await fetch(`${API}/${taskId}`, {
@@ -368,7 +347,7 @@ export default function Home() {
       });
       if (!res.ok) throw new Error(`${res.status}`);
       const updated = (await res.json()) as Task;
-      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+      setTasks(prev => prev.map(tt => tt.id === taskId ? updated : tt));
     } catch (e) { setError((e as Error).message); }
   }
 
@@ -377,7 +356,7 @@ export default function Home() {
     try {
       const res = await fetch(`${API}/${taskId}`, { method: "DELETE" });
       if (!res.ok) throw new Error(`${res.status}`);
-      setTasks(prev => prev.filter(t => t.id !== taskId));
+      setTasks(prev => prev.filter(tt => tt.id !== taskId));
       refreshStats();
     } catch (e) { setError((e as Error).message); }
   }
@@ -391,7 +370,7 @@ export default function Home() {
       });
       if (!res.ok) throw new Error(`${res.status}`);
       const updated = (await res.json()) as Task;
-      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+      setTasks(prev => prev.map(tt => tt.id === taskId ? updated : tt));
     } catch (e) { setError((e as Error).message); }
   }
 
@@ -410,71 +389,70 @@ export default function Home() {
     setExpandedTaskId(prev => prev === id ? null : id);
   }
 
-  const pending   = tasks.filter(t => t.status === "PENDING");
-  const completed = tasks.filter(t => t.status === "COMPLETED");
+  const pending   = tasks.filter(tt => tt.status === "PENDING");
+  const completed = tasks.filter(tt => tt.status === "COMPLETED");
 
   const visiblePending = useMemo(() => {
-    let list = filterToday ? pending.filter(t => isToday(t.createdAt)) : pending;
+    let list = filterToday ? pending.filter(tt => isToday(tt.createdAt)) : pending;
     if (sortByPriority) list = [...list].sort((a, b) => PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority]);
     return list;
   }, [pending, filterToday, sortByPriority]);
 
   const displayedPending = showAllPending ? visiblePending : visiblePending.slice(0, 3);
 
-  const maxBar = useMemo(() => {
-    const max = Math.max(...stats.map(d => d.created + d.completed), 1);
-    return max;
-  }, [stats]);
+  const maxBar = useMemo(() => Math.max(...stats.map(d => d.created + d.completed), 1), [stats]);
 
   const fmtDate = (s: string) => new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className="min-h-screen bg-surface-bg">
 
       {/* ── Hero Banner ─────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-500 to-indigo-600 h-44 sm:h-52">
-        <div className="absolute right-0 top-0 bottom-0 w-1/2 sm:w-2/5 flex flex-col justify-center px-6 gap-2 opacity-30 pointer-events-none select-none">
-          <p className="text-white text-xs font-medium mb-1">Pending Tasks ({pending.length})</p>
-          {pending.slice(0, 3).map(t => (
-            <div key={t.id} className="flex items-center gap-2 bg-white/20 rounded-md px-3 py-1.5">
-              <span className="w-3.5 h-3.5 rounded border border-white/60 flex-shrink-0" />
-              <span className="text-white text-xs truncate">{t.title}</span>
+      <div className="relative overflow-hidden hero-gradient h-48 sm:h-56">
+        {/* Ghost task preview — decorative right panel */}
+        <div className="absolute right-0 top-0 bottom-0 w-1/2 sm:w-2/5 flex flex-col justify-center px-6 gap-2.5 opacity-[0.15] pointer-events-none select-none">
+          <p className="text-text-secondary text-xs font-medium mb-0.5">Pending ({pending.length})</p>
+          {pending.slice(0, 3).map(task => (
+            <div key={task.id} className="flex items-center gap-2 bg-white/5 border border-white/5 rounded-xl px-3 py-1.5">
+              <span className="w-3.5 h-3.5 rounded border border-white/20 flex-shrink-0" />
+              <span className="text-white text-xs truncate">{task.title}</span>
             </div>
           ))}
-          {completed.length > 0 && (
-            <p className="text-white text-xs font-medium mt-1">Completed Tasks ({completed.length})</p>
-          )}
         </div>
-        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/95 via-purple-500/80 to-transparent" />
+
+        {/* Left fade overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0f0d18]/95 via-[#0f0d18]/65 to-transparent" />
+
         <div className="relative z-10 h-full flex flex-col justify-center px-6 sm:px-10">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold text-text-primary leading-tight tracking-tight">
             {getGreeting()},
           </h2>
-          <p className="text-indigo-100 text-sm sm:text-base mt-1">
-            You have <span className="font-semibold text-white">{pending.length}</span> pending task{pending.length !== 1 ? "s" : ""} for today
+          <p className="text-text-secondary text-sm sm:text-base mt-2">
+            You have{" "}
+            <span className="font-semibold text-accent-text">{pending.length}</span>{" "}
+            pending task{pending.length !== 1 ? "s" : ""} for today
           </p>
         </div>
       </div>
 
       {/* ── Main Content ─────────────────────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
 
         {error && (
-          <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="mb-6 px-4 py-3 bg-danger-muted border border-danger/20 rounded-xl text-danger-text text-sm">
             Error: {error}
           </div>
         )}
 
         {/* Header row */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">My Tasks</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className={t.pageTitle}>My Tasks</h1>
           <div className="flex gap-2">
             <button
               onClick={() => setSortByPriority(v => !v)}
               className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                sortByPriority
-                  ? "bg-indigo-600 text-white border-indigo-600"
-                  : "bg-white text-gray-600 border-gray-300 hover:border-indigo-400"
+                sortByPriority ? t.pillActive : t.pillInactive
               }`}
             >
               Priority View
@@ -482,9 +460,7 @@ export default function Home() {
             <button
               onClick={() => setFilterToday(v => !v)}
               className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                filterToday
-                  ? "bg-indigo-600 text-white border-indigo-600"
-                  : "bg-white text-gray-600 border-gray-300 hover:border-indigo-400"
+                filterToday ? t.pillActive : t.pillInactive
               }`}
             >
               Today
@@ -492,28 +468,28 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── Add Task Area — unified card ─────────────────────────────────── */}
-        <div className="mb-8">
-          <div className={`bg-white rounded-xl border shadow-sm transition-all ${
-            showDetails ? "border-indigo-200 shadow-indigo-50" : "border-gray-200"
-          } focus-within:border-indigo-300 focus-within:shadow-indigo-50`}>
+        {/* ── Add Task Card ─────────────────────────────────────────────────── */}
+        <div className="mb-10">
+          <div className={`bg-surface-1 rounded-2xl border shadow-lg shadow-black/30 transition-all ${
+            showDetails ? "border-accent/30" : "border-border-default"
+          } focus-within:border-accent/25`}>
 
-            {/* Text input row */}
-            <div className="px-4 pt-3 pb-2">
+            {/* Title input */}
+            <div className="px-5 pt-4 pb-3">
               <input
                 type="text"
                 placeholder="What do you want to get done?"
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                className="w-full text-sm text-gray-900 placeholder-gray-400 bg-transparent outline-none"
+                className="w-full text-sm text-text-primary placeholder-text-muted bg-transparent outline-none"
                 disabled={loading}
               />
             </div>
 
             {/* Tag expansion area */}
             {showDetails && (
-              <div className="px-4 pb-2.5 border-t border-dashed border-gray-200 pt-2.5">
+              <div className="px-5 pb-3 border-t border-dashed border-border-subtle pt-3">
                 <div className="flex flex-wrap items-center gap-1.5">
                   {newTags.map((tag, i) => (
                     <TagPill key={tag} label={tag} index={i} onRemove={() => removeNewTag(tag)} />
@@ -528,29 +504,29 @@ export default function Home() {
                       onKeyDown={handleTagKeyDown}
                       onBlur={commitTag}
                       maxLength={MAX_TAG_LENGTH + 1}
-                      className="flex-1 min-w-32 text-xs text-gray-700 placeholder-gray-400 bg-transparent outline-none"
+                      className="flex-1 min-w-32 text-xs text-text-primary placeholder-text-muted bg-transparent outline-none"
                     />
                   ) : (
-                    <span className="text-xs text-gray-400 italic">Max {MAX_TAGS} tags</span>
+                    <span className="text-xs text-text-muted italic">Max {MAX_TAGS} tags</span>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Toolbar row */}
-            <div className="px-3 py-2 border-t border-gray-100 flex items-center justify-between gap-2">
+            {/* Toolbar */}
+            <div className="px-4 py-3 border-t border-border-subtle flex items-center justify-between gap-2">
               <div className="flex items-center gap-1">
                 <select
                   value={priority}
                   onChange={e => setPriority(e.target.value as TaskPriority)}
-                  className="text-xs text-gray-500 bg-transparent outline-none cursor-pointer pr-1 hover:text-gray-700 transition-colors"
+                  className="text-xs text-text-muted bg-transparent outline-none cursor-pointer pr-1 hover:text-text-secondary transition-colors"
                 >
                   <option value="LOW">Low priority</option>
                   <option value="MEDIUM">Medium priority</option>
                   <option value="HIGH">High priority</option>
                 </select>
 
-                <span className="w-px h-3.5 bg-gray-200 mx-1" />
+                <span className="w-px h-3.5 bg-border-default mx-1" />
 
                 <button
                   type="button"
@@ -558,10 +534,10 @@ export default function Home() {
                     setShowDetails(v => !v);
                     if (!showDetails) setTimeout(() => tagInputRef.current?.focus(), 50);
                   }}
-                  className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-md transition-colors ${
+                  className={`flex items-center gap-1.5 text-xs px-2 py-1 rounded-lg transition-colors ${
                     showDetails || newTags.length > 0
-                      ? "text-indigo-600 bg-indigo-50 hover:bg-indigo-100"
-                      : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                      ? "text-accent-text bg-accent-muted hover:bg-accent-muted/80"
+                      : "text-text-muted hover:text-text-secondary hover:bg-surface-3"
                   }`}
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -569,7 +545,7 @@ export default function Home() {
                   </svg>
                   Tags
                   {newTags.length > 0 && (
-                    <span className="px-1.5 py-0.5 bg-indigo-600 text-white rounded-full text-xs font-bold leading-none">
+                    <span className="px-1.5 py-0.5 bg-accent text-white rounded-full text-xs font-bold leading-none">
                       {newTags.length}
                     </span>
                   )}
@@ -579,7 +555,7 @@ export default function Home() {
               <button
                 onClick={addTask}
                 disabled={loading || !input.trim()}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold rounded-lg shadow-sm transition-all active:scale-95"
+                className="btn-primary"
               >
                 Add Task
               </button>
@@ -587,72 +563,73 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Two-column layout */}
+        {/* ── Two-column layout ─────────────────────────────────────────────── */}
         <div className="flex flex-col lg:flex-row gap-6">
 
-          {/* ── Left: Task Lists ───────────────────────────────────────────────── */}
-          <div className="flex-1 min-w-0 space-y-6">
+          {/* Left: Task Lists */}
+          <div className="flex-1 min-w-0 space-y-8">
 
             {loading && (
               <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-200 border-t-indigo-600" />
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-surface-3 border-t-accent" />
               </div>
             )}
 
             {!loading && tasks.length === 0 && (
-              <div className="text-center py-16">
-                <div className="text-5xl mb-3">📝</div>
-                <p className="text-gray-500">No tasks yet — add one above</p>
+              <div className="text-center py-20">
+                <div className="text-5xl mb-4">📝</div>
+                <p className="text-text-muted text-sm">No tasks yet — add one above</p>
               </div>
             )}
 
-            {/* Pending Tasks */}
+            {/* ── Pending Tasks ──────────────────────────────────────────────── */}
             {!loading && visiblePending.length > 0 && (
               <section>
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="section-label">
                     Pending Tasks ({visiblePending.length})
                   </h2>
                   {visiblePending.length > 3 && (
                     <button
                       onClick={() => setShowAllPending(v => !v)}
-                      className="text-xs text-indigo-600 hover:underline font-medium"
+                      className="text-xs text-accent hover:text-accent-text font-medium transition-colors"
                     >
-                      {showAllPending ? "Show less" : `View All →`}
+                      {showAllPending ? "Show less" : "View All →"}
                     </button>
                   )}
                 </div>
-                <div className="space-y-2">
+
+                <div className="space-y-3">
                   {displayedPending.map(task => {
-                    const isConfirming     = confirmingId === task.id;
-                    const isExpanded       = expandedTaskId === task.id;
-                    const hasTags          = task.tags && task.tags.length > 0;
-                    const hasSubtasks      = task.subtasks && task.subtasks.length > 0;
-                    const isAddingSubtask  = addingSubtaskForId === task.id;
-                    const doneSubtasks     = task.subtasks?.filter(s => s.status === "COMPLETED").length ?? 0;
-                    const totalSubtasks    = task.subtasks?.length ?? 0;
+                    const isConfirming    = confirmingId   === task.id;
+                    const isExpanded      = expandedTaskId === task.id;
+                    const isDeletingTask  = confirmDeleteId === task.id;
+                    const hasTags         = task.tags     && task.tags.length > 0;
+                    const hasSubtasks     = task.subtasks && task.subtasks.length > 0;
+                    const isAddingSubtask = addingSubtaskForId === task.id;
+                    const doneSubtasks    = task.subtasks?.filter(s => s.status === "COMPLETED").length ?? 0;
+                    const totalSubtasks   = task.subtasks?.length ?? 0;
+
                     return (
                       <div
                         key={task.id}
-                        className={`bg-white rounded-xl border shadow-sm transition-all duration-200 ${
-                          isConfirming ? "border-indigo-300 shadow-indigo-100" : "border-gray-100 hover:shadow-md"
+                        className={`${t.cardPending} ${
+                          isConfirming   ? "border-accent/30"  :
+                          isDeletingTask ? "border-danger/25"  :
+                          "hover:border-border-default/60"
                         } ${animatingId === task.id ? "opacity-50 scale-95" : ""}`}
                       >
                         {/* Main task row */}
-                        <div className="px-3 py-3.5 flex items-center gap-2">
+                        <div className="px-5 py-4 flex items-center gap-3">
 
                           {/* Completion checkbox */}
                           <button
                             onClick={() => isConfirming ? cancelConfirm() : requestComplete(task)}
-                            className={`w-5 h-5 rounded border-2 flex-shrink-0 transition-colors ${
-                              isConfirming
-                                ? "border-indigo-500 bg-indigo-50"
-                                : "border-gray-300 hover:border-indigo-500"
-                            }`}
+                            className={isConfirming ? t.checkboxConfirming : t.checkboxPending}
                             aria-label={`Complete ${task.title}`}
                           />
 
-                          {/* Title and meta */}
+                          {/* Title + meta */}
                           <div className="flex-1 min-w-0">
                             {editingTaskId === task.id ? (
                               <input
@@ -660,22 +637,22 @@ export default function Home() {
                                 value={editTaskInput}
                                 onChange={e => setEditTaskInput(e.target.value)}
                                 onKeyDown={e => {
-                                  if (e.key === "Enter") { e.preventDefault(); saveTaskEdit(task.id); }
+                                  if (e.key === "Enter")  { e.preventDefault(); saveTaskEdit(task.id); }
                                   if (e.key === "Escape") setEditingTaskId(null);
                                 }}
                                 onBlur={() => saveTaskEdit(task.id)}
-                                className="w-full text-sm font-medium text-gray-900 bg-gray-50 border border-indigo-300 rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                                className="w-full text-sm font-medium text-text-primary bg-surface-2 border border-accent/40 rounded-lg px-2.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-accent"
                               />
                             ) : (
-                              <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
+                              <p className={t.taskTitle}>{task.title}</p>
                             )}
-                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
+                            <p className={t.taskMeta}>
                               <span>📅</span>
                               {fmtDate(task.createdAt)}
                               {totalSubtasks > 0 && (
                                 <>
-                                  <span className="text-gray-200">·</span>
-                                  <span className={doneSubtasks === totalSubtasks ? "text-emerald-500" : "text-gray-400"}>
+                                  <span className="text-border-default">·</span>
+                                  <span className={doneSubtasks === totalSubtasks ? "text-emerald-400" : "text-text-muted"}>
                                     {doneSubtasks}/{totalSubtasks} subtasks
                                   </span>
                                 </>
@@ -683,7 +660,8 @@ export default function Home() {
                             </p>
                           </div>
 
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${PRIORITY_COLOR[task.priority]}`}>
+                          {/* Priority badge */}
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${t.priority[task.priority]}`}>
                             {PRIORITY_LABEL[task.priority]}
                           </span>
 
@@ -694,20 +672,18 @@ export default function Home() {
                                 e.stopPropagation();
                                 setActiveMenuId(prev => prev === task.id ? null : task.id);
                               }}
-                              className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-gray-900 rounded-md hover:bg-gray-100 transition-colors"
+                              className={`w-7 h-7 ${t.iconBtn}`}
                               aria-label="Task options"
                             >
                               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                <circle cx="12" cy="5" r="1.5" />
+                                <circle cx="12" cy="5"  r="1.5" />
                                 <circle cx="12" cy="12" r="1.5" />
                                 <circle cx="12" cy="19" r="1.5" />
                               </svg>
                             </button>
+
                             {activeMenuId === task.id && (
-                              <div
-                                className="absolute right-0 top-8 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[148px]"
-                                onClick={e => e.stopPropagation()}
-                              >
+                              <div className={t.menuShell} onClick={e => e.stopPropagation()}>
                                 <button
                                   onClick={e => {
                                     e.stopPropagation();
@@ -717,9 +693,9 @@ export default function Home() {
                                     setConfirmingId(null);
                                     setActiveMenuId(null);
                                   }}
-                                  className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                  className={t.menuItem}
                                 >
-                                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <svg className="w-3.5 h-3.5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z" />
                                   </svg>
                                   Edit title
@@ -731,14 +707,14 @@ export default function Home() {
                                     setSubtaskInput("");
                                     setActiveMenuId(null);
                                   }}
-                                  className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                  className={t.menuItem}
                                 >
-                                  <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <svg className="w-3.5 h-3.5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                                   </svg>
                                   Add Subtask
                                 </button>
-                                <div className="border-t border-gray-100 my-1" />
+                                <div className="border-t border-border-subtle my-1.5" />
                                 <button
                                   onClick={e => {
                                     e.stopPropagation();
@@ -747,7 +723,7 @@ export default function Home() {
                                     setEditingTaskId(null);
                                     setActiveMenuId(null);
                                   }}
-                                  className="w-full text-left px-3 py-2 text-xs text-red-500 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                  className={t.menuItemDanger}
                                 >
                                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4h6v3M3 7h18" />
@@ -759,10 +735,10 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {/* Subtasks section */}
+                        {/* Subtasks */}
                         {(hasSubtasks || isAddingSubtask) && (
-                          <div className="px-3 pb-3 border-t border-gray-50">
-                            <div className="ml-8 space-y-1.5 pt-2">
+                          <div className="px-5 pb-4 border-t border-border-subtle">
+                            <div className="ml-8 space-y-2 pt-3">
                               {task.subtasks.map(subtask => (
                                 <SubtaskRow
                                   key={subtask.id}
@@ -775,7 +751,7 @@ export default function Home() {
                               ))}
                               {isAddingSubtask && (
                                 <div className="flex items-center gap-2 pt-0.5">
-                                  <div className="w-4 h-4 rounded border-2 border-dashed border-gray-200 flex-shrink-0" />
+                                  <div className="w-4 h-4 rounded border-2 border-dashed border-border-default flex-shrink-0" />
                                   <input
                                     autoFocus
                                     type="text"
@@ -783,21 +759,21 @@ export default function Home() {
                                     value={subtaskInput}
                                     onChange={e => setSubtaskInput(e.target.value)}
                                     onKeyDown={e => {
-                                      if (e.key === "Enter") { e.preventDefault(); addSubtask(task.id); }
+                                      if (e.key === "Enter")  { e.preventDefault(); addSubtask(task.id); }
                                       if (e.key === "Escape") { setAddingSubtaskForId(null); setSubtaskInput(""); }
                                     }}
-                                    className="flex-1 text-xs text-gray-800 placeholder-gray-400 bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-300 focus:border-indigo-300"
+                                    className="flex-1 text-xs text-text-primary placeholder-text-muted bg-surface-2 border border-border-default rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
                                   />
                                   <button
                                     onClick={() => addSubtask(task.id)}
                                     disabled={!subtaskInput.trim()}
-                                    className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs font-medium rounded transition-colors"
+                                    className="px-2.5 py-1.5 bg-accent hover:bg-accent-hover disabled:opacity-30 text-white text-xs font-medium rounded-lg transition-colors"
                                   >
                                     Add
                                   </button>
                                   <button
                                     onClick={() => { setAddingSubtaskForId(null); setSubtaskInput(""); }}
-                                    className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 text-base leading-none"
+                                    className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-text-secondary text-base leading-none"
                                     aria-label="Cancel adding subtask"
                                   >
                                     ×
@@ -808,13 +784,13 @@ export default function Home() {
                           </div>
                         )}
 
-                        {/* More details toggle (tags) */}
+                        {/* Tags toggle */}
                         {hasTags && (
-                          <div className="px-4 pb-2">
+                          <div className="px-5 pb-4">
                             <button
                               type="button"
                               onClick={() => toggleTaskDetails(task.id)}
-                              className="flex items-center gap-1 text-xs text-gray-400 hover:text-indigo-500 transition-colors"
+                              className="flex items-center gap-1 text-xs text-text-muted hover:text-accent transition-colors"
                             >
                               <svg
                                 className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
@@ -826,36 +802,26 @@ export default function Home() {
                             </button>
 
                             {isExpanded && (
-                              <div className="mt-2 pt-2 border-t border-gray-100">
-                                <p className="text-xs text-gray-400 font-medium mb-1.5">Tags</p>
+                              <div className="mt-3 pt-3 border-t border-border-subtle">
+                                <p className={t.detailLabel}>Tags</p>
                                 <div className="flex flex-wrap gap-1.5">
-                                  {task.tags.map((tag, i) => (
-                                    <TagPill key={tag} label={tag} index={i} />
-                                  ))}
+                                  {task.tags.map((tag, i) => <TagPill key={tag} label={tag} index={i} />)}
                                 </div>
                               </div>
                             )}
                           </div>
                         )}
 
-                        {/* Delete confirmation strip */}
-                        {confirmDeleteId === task.id && (
-                          <div className="px-4 pb-4 animate-fade-in">
-                            <div className="border-t border-red-100 pt-3">
-                              <p className="text-xs font-medium text-red-600 mb-2">
-                                Delete this task permanently?
-                              </p>
+                        {/* Delete confirmation */}
+                        {isDeletingTask && (
+                          <div className="px-5 pb-5 animate-fade-in">
+                            <div className={t.panelBorderDanger}>
+                              <p className="text-xs font-medium text-danger mb-3">Delete this task permanently?</p>
                               <div className="flex gap-2">
-                                <button
-                                  onClick={() => deleteTask(task.id)}
-                                  className="flex-1 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors active:scale-95"
-                                >
+                                <button onClick={() => deleteTask(task.id)} className="btn-danger">
                                   Delete
                                 </button>
-                                <button
-                                  onClick={() => setConfirmDeleteId(null)}
-                                  className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-colors"
-                                >
+                                <button onClick={() => setConfirmDeleteId(null)} className="btn-secondary">
                                   Cancel
                                 </button>
                               </div>
@@ -863,15 +829,16 @@ export default function Home() {
                           </div>
                         )}
 
-                        {/* Inline note panel — shown when confirming */}
+                        {/* Complete confirmation + note */}
                         {isConfirming && (
-                          <div className="px-4 pb-4 animate-fade-in">
-                            <div className="border-t border-indigo-100 pt-3">
-                              <p className="text-xs font-medium text-indigo-700 mb-2">
-                                Add a completion note <span className="text-gray-400 font-normal">(optional)</span>
+                          <div className="px-5 pb-5 animate-fade-in">
+                            <div className={t.panelBorderAccent}>
+                              <p className="text-xs font-medium text-accent-text mb-3">
+                                Add a completion note{" "}
+                                <span className="text-text-muted font-normal">(optional)</span>
                               </p>
                               {totalSubtasks > 0 && doneSubtasks < totalSubtasks && (
-                                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-2">
+                                <p className="text-xs text-amber-400 bg-amber-950/40 border border-amber-800/30 rounded-xl px-3 py-2 mb-3">
                                   {totalSubtasks - doneSubtasks} subtask{totalSubtasks - doneSubtasks !== 1 ? "s" : ""} will also be marked complete.
                                 </p>
                               )}
@@ -885,19 +852,16 @@ export default function Home() {
                                   if (e.key === "Escape") cancelConfirm();
                                 }}
                                 placeholder="What did you accomplish? Any blockers? (optional)"
-                                className="w-full text-sm text-gray-800 placeholder-gray-400 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
+                                className="w-full text-sm text-text-primary placeholder-text-muted bg-surface-2 border border-border-default rounded-xl px-4 py-2.5 resize-none focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-all"
                               />
-                              <div className="flex gap-2 mt-2">
+                              <div className="flex gap-2 mt-3">
                                 <button
                                   onClick={() => completeWithNote(task)}
-                                  className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors active:scale-95"
+                                  className="flex-1 py-2 bg-accent hover:bg-accent-hover text-white text-xs font-semibold rounded-xl transition-colors active:scale-95"
                                 >
                                   ✓ Mark Complete
                                 </button>
-                                <button
-                                  onClick={cancelConfirm}
-                                  className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-colors"
-                                >
+                                <button onClick={cancelConfirm} className="btn-secondary">
                                   Cancel
                                 </button>
                               </div>
@@ -912,57 +876,59 @@ export default function Home() {
             )}
 
             {!loading && pending.length > 0 && visiblePending.length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-6">No pending tasks match this filter</p>
+              <p className="text-sm text-text-muted text-center py-6">No pending tasks match this filter</p>
             )}
 
-            {/* Completed Tasks */}
+            {/* ── Completed Tasks ───────────────────────────────────────────── */}
             {!loading && completed.length > 0 && (
               <section>
-                <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">
+                <h2 className="section-label mb-4">
                   Completed Tasks ({completed.length})
                 </h2>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {completed.map(task => {
                     const isExpanded  = expandedTaskId === task.id;
-                    const hasTags     = task.tags && task.tags.length > 0;
+                    const hasTags     = task.tags     && task.tags.length > 0;
                     const hasSubtasks = task.subtasks && task.subtasks.length > 0;
                     const hasDetails  = hasTags || !!task.completionNote || hasSubtasks;
+
                     return (
                       <div
                         key={task.id}
-                        className={`bg-emerald-50 rounded-xl border border-emerald-100 transition-all duration-200 ${
-                          animatingId === task.id ? "opacity-50 scale-95" : ""
-                        }`}
+                        className={`${t.cardCompleted} ${animatingId === task.id ? "opacity-50 scale-95" : ""}`}
                       >
-                        <div className="px-4 py-3.5 flex items-center gap-3">
+                        <div className="px-5 py-4 flex items-center gap-3">
                           <button
                             onClick={() => revertToPending(task)}
-                            className="w-5 h-5 rounded border-2 border-emerald-500 bg-emerald-500 flex-shrink-0 flex items-center justify-center transition-colors hover:bg-emerald-400"
+                            className={t.checkboxDone}
                             aria-label={`Undo ${task.title}`}
                           >
                             <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
                           </button>
+
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-400 truncate">{task.title}</p>
-                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
+                            <p className="text-sm text-text-muted line-through truncate">{task.title}</p>
+                            <p className={t.taskMeta}>
                               <span>✓</span>
                               {task.completedAt ? fmtDate(task.completedAt) : fmtDate(task.createdAt)}
                               {hasSubtasks && (
                                 <>
-                                  <span className="text-gray-300">·</span>
+                                  <span className="text-border-default">·</span>
                                   <span>{task.subtasks.length} subtask{task.subtasks.length !== 1 ? "s" : ""}</span>
                                 </>
                               )}
                             </p>
                           </div>
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_COLOR[task.priority]}`}>
+
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${t.priority[task.priority]}`}>
                             {PRIORITY_LABEL[task.priority]}
                           </span>
+
                           <button
                             onClick={() => deleteTask(task.id)}
-                            className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-md hover:bg-red-50 transition-colors flex-shrink-0"
+                            className={`w-6 h-6 ${t.iconBtn} hover:text-danger hover:bg-danger-muted`}
                             aria-label={`Delete ${task.title}`}
                           >
                             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -971,13 +937,12 @@ export default function Home() {
                           </button>
                         </div>
 
-                        {/* More details toggle for completed tasks */}
                         {hasDetails && (
-                          <div className="px-4 pb-3">
+                          <div className="px-5 pb-4">
                             <button
                               type="button"
                               onClick={() => toggleTaskDetails(task.id)}
-                              className="flex items-center gap-1 text-xs text-emerald-500 hover:text-emerald-700 transition-colors"
+                              className="flex items-center gap-1 text-xs text-text-muted hover:text-emerald-400 transition-colors"
                             >
                               <svg
                                 className={`w-3 h-3 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
@@ -989,29 +954,27 @@ export default function Home() {
                             </button>
 
                             {isExpanded && (
-                              <div className="mt-2 space-y-2.5">
+                              <div className="mt-3 space-y-3">
                                 {task.completionNote && (
-                                  <div className="px-3 py-2 bg-white border border-emerald-100 rounded-lg">
-                                    <p className="text-xs text-gray-500 leading-relaxed">
-                                      <span className="font-medium text-emerald-600">Note: </span>
+                                  <div className="px-3 py-2.5 bg-surface-2 border border-border-subtle rounded-xl">
+                                    <p className="text-xs text-text-secondary leading-relaxed">
+                                      <span className="font-medium text-emerald-400">Note: </span>
                                       {task.completionNote}
                                     </p>
                                   </div>
                                 )}
                                 {hasSubtasks && (
                                   <div>
-                                    <p className="text-xs text-gray-400 font-medium mb-1.5">
-                                      Subtasks ({task.subtasks.length})
-                                    </p>
-                                    <div className="space-y-1">
+                                    <p className={t.detailLabel}>Subtasks ({task.subtasks.length})</p>
+                                    <div className="space-y-1.5">
                                       {task.subtasks.map(st => (
                                         <div key={st.id} className="flex items-center gap-2">
-                                          <div className="w-4 h-4 rounded border-2 border-emerald-400 bg-emerald-400 flex-shrink-0 flex items-center justify-center">
+                                          <div className="w-4 h-4 rounded border-2 border-emerald-600 bg-emerald-600 flex-shrink-0 flex items-center justify-center">
                                             <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                                               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                             </svg>
                                           </div>
-                                          <span className="text-xs line-through text-gray-400 truncate">{st.title}</span>
+                                          <span className="text-xs line-through text-text-muted truncate">{st.title}</span>
                                         </div>
                                       ))}
                                     </div>
@@ -1019,11 +982,9 @@ export default function Home() {
                                 )}
                                 {hasTags && (
                                   <div>
-                                    <p className="text-xs text-gray-400 font-medium mb-1.5">Tags</p>
+                                    <p className={t.detailLabel}>Tags</p>
                                     <div className="flex flex-wrap gap-1.5">
-                                      {task.tags.map((tag, i) => (
-                                        <TagPill key={tag} label={tag} index={i} />
-                                      ))}
+                                      {task.tags.map((tag, i) => <TagPill key={tag} label={tag} index={i} />)}
                                     </div>
                                   </div>
                                 )}
@@ -1039,38 +1000,43 @@ export default function Home() {
             )}
           </div>
 
-          {/* ── Right: Stats Sidebar ───────────────────────────────────────────── */}
+          {/* ── Right: Stats Sidebar ───────────────────────────────────────── */}
           <div className="w-full lg:w-64 xl:w-72 flex-shrink-0 space-y-4">
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-4">Daily Progress</p>
+            {/* Daily Progress */}
+            <div className="card p-5">
+              <p className="section-label mb-5">Daily Progress</p>
 
               {stats.length === 0 ? (
                 <div className="flex items-end justify-between gap-1.5 h-24">
                   {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => (
                     <div key={d} className="flex-1 flex flex-col items-center gap-1">
-                      <div className="w-full bg-gray-100 rounded-t-sm" style={{ height: "40px" }} />
-                      <span className="text-xs text-gray-400">{d}</span>
+                      <div className="w-full bg-surface-3 rounded-t-sm" style={{ height: "40px" }} />
+                      <span className="text-xs text-text-muted">{d}</span>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div className="flex items-end justify-between gap-1.5" style={{ height: "88px" }}>
                   {stats.map(day => {
-                    const createdH   = (day.created  / maxBar) * 100;
+                    const createdH   = (day.created / maxBar) * 100;
                     const completedH = day.created > 0 ? (day.completed / day.created) * 100 : 0;
                     return (
                       <div key={day.day} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
                         <div
-                          className={`w-full relative rounded-t-md overflow-hidden transition-all duration-500 ${day.isToday ? "bg-indigo-200" : "bg-gray-200"}`}
+                          className={`w-full relative rounded-t-md overflow-hidden transition-all duration-500 ${
+                            day.isToday ? "bg-accent-muted" : "bg-surface-3"
+                          }`}
                           style={{ height: `${Math.max(createdH, day.created > 0 ? 8 : 4)}%` }}
                         >
                           <div
-                            className={`absolute bottom-0 left-0 right-0 transition-all duration-700 ${day.isToday ? "bg-indigo-600" : "bg-indigo-400"}`}
+                            className={`absolute bottom-0 left-0 right-0 transition-all duration-700 ${
+                              day.isToday ? "bg-accent" : "bg-accent/50"
+                            }`}
                             style={{ height: `${completedH}%` }}
                           />
                         </div>
-                        <span className={`text-xs font-medium mt-1 ${day.isToday ? "text-indigo-600" : "text-gray-400"}`}>
+                        <span className={`text-xs font-medium mt-1 ${day.isToday ? "text-accent-text" : "text-text-muted"}`}>
                           {day.day}
                         </span>
                       </div>
@@ -1079,21 +1045,26 @@ export default function Home() {
                 </div>
               )}
 
-              <div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-indigo-300 inline-block" />Created</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-indigo-600 inline-block" />Done</span>
+              <div className="mt-4 flex items-center gap-4 text-xs text-text-muted">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-sm bg-surface-3 inline-block" />Created
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-sm bg-accent inline-block" />Done
+                </span>
               </div>
             </div>
 
-            <div className="bg-indigo-600 rounded-2xl p-5 text-white">
-              <p className="text-xs font-semibold uppercase tracking-widest text-indigo-200 mb-2">Efficiency</p>
-              <p className="text-3xl font-bold">
+            {/* Efficiency */}
+            <div className="bg-accent-muted rounded-2xl border border-accent/20 p-5">
+              <p className="section-label mb-2">Efficiency</p>
+              <p className="text-3xl font-bold text-text-primary tracking-tight">
                 {tasks.length > 0 ? Math.round((completed.length / tasks.length) * 100) : 0}%
               </p>
-              <p className="text-xs text-indigo-200 mt-1">tasks completed</p>
-              <div className="mt-3 bg-indigo-500 rounded-full h-1.5">
+              <p className="text-xs text-text-secondary mt-1">tasks completed</p>
+              <div className="mt-4 bg-surface-3/50 rounded-full h-1.5">
                 <div
-                  className="bg-white rounded-full h-1.5 transition-all duration-700"
+                  className="bg-accent rounded-full h-1.5 transition-all duration-700"
                   style={{ width: `${tasks.length > 0 ? (completed.length / tasks.length) * 100 : 0}%` }}
                 />
               </div>
