@@ -6,14 +6,28 @@ import org.springframework.stereotype.Service;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
 
 @Service
 public class TaskService {
 
     private final Map<String, Task> store = new ConcurrentHashMap<>();
 
-    public Task create(String title, Task.Priority priority) {
+    private static final int MAX_TAGS = 3;
+
+    private List<String> sanitiseTags(List<String> raw) {
+        if (raw == null) return List.of();
+        return raw.stream()
+            .filter(t -> t != null && !t.isBlank())
+            .map(t -> t.trim().toLowerCase())
+            .distinct()
+            .limit(MAX_TAGS)
+            .toList();
+    }
+
+    public Task create(String title, Task.Priority priority, List<String> tags) {
         Task task = new Task(title, priority);
+        task.setTags(sanitiseTags(tags));
         store.put(task.getId(), task);
         return task;
     }
@@ -22,7 +36,7 @@ public class TaskService {
         return new ArrayList<>(store.values());
     }
 
-    public Task update(String id, Task.Status status, Task.Priority priority, String note) {
+    public Task update(String id, Task.Status status, Task.Priority priority, String note, List<String> tags) {
         Task task = store.get(id);
         if (task == null) throw new IllegalArgumentException("Task not found: " + id);
 
@@ -38,6 +52,9 @@ public class TaskService {
         }
         if (priority != null) {
             task.setPriority(priority);
+        }
+        if (tags != null) {
+            task.setTags(sanitiseTags(tags));
         }
         return task;
     }

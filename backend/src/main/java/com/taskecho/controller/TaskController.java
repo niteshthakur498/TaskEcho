@@ -21,12 +21,11 @@ public class TaskController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Task create(@RequestBody Map<String, String> body) {
-        String title = body.get("title");
-        Task.Priority priority = body.containsKey("priority")
-            ? Task.Priority.valueOf(body.get("priority").toUpperCase())
+    public Task create(@RequestBody TaskRequest body) {
+        Task.Priority priority = body.getPriority() != null
+            ? Task.Priority.valueOf(body.getPriority().toUpperCase())
             : Task.Priority.MEDIUM;
-        return taskService.create(title, priority);
+        return taskService.create(body.getTitle(), priority, body.getTags());
     }
 
     @GetMapping
@@ -35,15 +34,14 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public Task update(@PathVariable String id, @RequestBody Map<String, String> body) {
-        Task.Status status = body.containsKey("status")
-            ? Task.Status.valueOf(body.get("status").toUpperCase())
+    public Task update(@PathVariable String id, @RequestBody TaskRequest body) {
+        Task.Status status = body.getStatus() != null
+            ? Task.Status.valueOf(body.getStatus().toUpperCase())
             : null;
-        Task.Priority priority = body.containsKey("priority")
-            ? Task.Priority.valueOf(body.get("priority").toUpperCase())
+        Task.Priority priority = body.getPriority() != null
+            ? Task.Priority.valueOf(body.getPriority().toUpperCase())
             : null;
-        String note = body.getOrDefault("note", null);
-        return taskService.update(id, status, priority, note);
+        return taskService.update(id, status, priority, body.getNote(), body.getTags());
     }
 
     @GetMapping("/stats/weekly")
