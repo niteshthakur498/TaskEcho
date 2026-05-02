@@ -46,6 +46,45 @@ This document tracks all features implemented in TaskEcho, their status, and whe
 
 ---
 
+### 3. Modern UI/UX Redesign
+**Status:** In Development  
+**Version:** 1.1.0  
+**Branch:** `feat/ui-redesign`  
+**Date:** May 2026
+
+**Features:**
+- Modern, clean interface with Tailwind CSS
+- Centered max-width layout with soft gradient background
+- Card-based task design with subtle shadows and hover effects
+- Smooth animations (slide-up, fade-in) for task transitions
+- Purple + green color scheme (primary actions, success states)
+- Completed tasks highlighted with green styling + strike-through
+- Progress tracking footer (total, completed, percentage)
+- Responsive design (mobile 375px, desktop 1280px+)
+- Enhanced input field with focus states
+- Loading spinner and error state handling
+- Empty state with emoji guidance
+
+**Technical Stack:**
+- Tailwind CSS 3.4.1 for utility-first styling
+- Custom animations in `tailwind.config.js`
+- PostCSS for CSS processing
+- No heavy component libraries (Material UI, Bootstrap excluded)
+
+**Details:** [UI Redesign Feature](features/ui-redesign.md)
+
+**Files Modified:**
+- `frontend/package.json` — Added Tailwind, PostCSS, Autoprefixer
+- `frontend/src/app/page.tsx` — Complete UI rewrite with Tailwind classes
+- `frontend/src/app/layout.tsx` — Imported global styles
+
+**Files Created:**
+- `frontend/tailwind.config.js` — Theme config with custom colors/animations
+- `frontend/postcss.config.js` — PostCSS plugin configuration
+- `frontend/src/app/globals.css` — Tailwind directives + custom components
+
+---
+
 ## 🚀 Upcoming Features
 
 ### Task Deletion
@@ -142,11 +181,12 @@ When proposing a new feature:
 |---------|------|----------|--------|
 | 0.0.1 | May 2026 | Core task management | Released |
 | 1.0.0 | May 2026 | Task completion toggle | Merged (Pending) |
-| 1.1.0 | TBD | Task deletion | Planned |
-| 1.2.0 | TBD | Task editing | Planned |
-| 1.3.0 | TBD | Tags/categories | Planned |
-| 1.4.0 | TBD | Advanced filtering | Planned |
-| 1.5.0 | TBD | Priority levels | Planned |
+| 1.1.0 | May 2026 | Modern UI redesign (Tailwind) | In Development |
+| 1.2.0 | TBD | Task deletion | Planned |
+| 1.3.0 | TBD | Task editing | Planned |
+| 1.4.0 | TBD | Tags/categories | Planned |
+| 1.5.0 | TBD | Advanced filtering | Planned |
+| 1.6.0 | TBD | Priority levels | Planned |
 | 2.0.0 | TBD | Recurring tasks | Planned |
 
 ---
