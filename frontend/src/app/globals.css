@@ -4,34 +4,64 @@
 
 @layer base {
   body {
-    @apply bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen;
+    @apply bg-surface-bg text-text-primary min-h-screen;
   }
 
+  /* Remove number input spinners */
   input::-webkit-outer-spin-button,
   input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
   }
-
   input[type='number'] {
     -moz-appearance: textfield;
+  }
+
+  /* Dark-themed native select options */
+  select option {
+    background-color: #1b1b1e;
+    color: #e4e4e8;
   }
 }
 
 @layer components {
+  /* Hero section gradient — indigo to violet, rich but not dark */
+  .hero-gradient {
+    background: linear-gradient(135deg, #4338ca 0%, #6d28d9 55%, #5b21b6 100%);
+  }
+
+  /* Reusable card shell */
+  .card {
+    @apply bg-surface-1 rounded-2xl border border-border-default shadow-lg shadow-black/30;
+  }
+
+  /* Primary action button */
   .btn-primary {
-    @apply px-6 py-2.5 bg-primary text-white font-medium rounded-lg hover:bg-primary-dark transition-colors duration-200 active:scale-95 transform;
+    @apply px-5 py-2 bg-accent hover:bg-accent-hover disabled:opacity-30 disabled:cursor-not-allowed
+           text-white text-xs font-semibold rounded-xl shadow-sm transition-all active:scale-95;
   }
 
+  /* Ghost / secondary button */
   .btn-secondary {
-    @apply px-6 py-2.5 bg-gray-200 text-gray-800 font-medium rounded-lg hover:bg-gray-300 transition-colors duration-200 active:scale-95 transform;
+    @apply px-4 py-2 bg-surface-3 hover:bg-surface-3/80
+           text-text-secondary text-xs font-medium rounded-xl transition-colors;
   }
 
-  .task-card {
-    @apply bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 p-4 border border-gray-100;
+  /* Danger action button */
+  .btn-danger {
+    @apply flex-1 py-2 bg-danger/10 hover:bg-danger/20
+           text-danger text-xs font-semibold rounded-xl transition-colors active:scale-95;
   }
 
-  .section-title {
-    @apply text-lg font-semibold text-gray-900 mb-4;
+  /* Standard text input box */
+  .input-box {
+    @apply bg-surface-2 border border-border-default text-text-primary placeholder-text-muted
+           rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-accent
+           focus:border-accent transition-colors;
+  }
+
+  /* Section label (all-caps meta heading) */
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-widest text-text-muted;
   }
 }
