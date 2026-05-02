@@ -12,7 +12,7 @@ Tasks now support optional subtasks — a flat list of smaller work items nested
 
 **Key capabilities:**
 - Any existing pending task can have subtasks added at any time before it is completed
-- Subtasks are added via a **3-dot menu (⋮)** on the left of each pending task card
+- Subtasks are added via a **3-dot menu (⋮)** on the right of each pending task card (after the priority badge)
 - Each subtask has its own checkbox; checking it marks only that subtask complete (strikethrough + filled checkbox)
 - Unchecking a completed subtask reverts it to pending
 - Completing the **main task** cascades completion to all subtasks automatically
@@ -23,7 +23,7 @@ Tasks now support optional subtasks — a flat list of smaller work items nested
 
 **User workflow:**
 1. Create a task normally
-2. Click **⋮** → **Add Subtask** to open the inline input
+2. Click **⋮** (right side of task card) → **Add Subtask** to open the inline input
 3. Type a subtask title and press **Enter** (or click **Add**)
 4. Repeat to add more subtasks; press **Escape** or click **×** to close the input
 5. Check/uncheck individual subtasks independently
