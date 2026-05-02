@@ -37,10 +37,17 @@ public class TaskService {
         return new ArrayList<>(store.values());
     }
 
-    public Task update(String id, Task.Status status, Task.Priority priority, String note, List<String> tags) {
+    public void deleteTask(String id) {
+        if (store.remove(id) == null) throw new IllegalArgumentException("Task not found: " + id);
+    }
+
+    public Task update(String id, Task.Status status, Task.Priority priority, String note, List<String> tags, String title) {
         Task task = store.get(id);
         if (task == null) throw new IllegalArgumentException("Task not found: " + id);
 
+        if (title != null && !title.isBlank()) {
+            task.setTitle(title.trim());
+        }
         if (status != null) {
             task.setStatus(status);
             if (status == Task.Status.COMPLETED) {
@@ -79,7 +86,7 @@ public class TaskService {
         return task;
     }
 
-    public Task updateSubtask(String taskId, String subtaskId, Task.Status status) {
+    public Task updateSubtask(String taskId, String subtaskId, Task.Status status, String title) {
         Task task = store.get(taskId);
         if (task == null) throw new IllegalArgumentException("Task not found: " + taskId);
 
@@ -88,6 +95,9 @@ public class TaskService {
             .findFirst()
             .orElseThrow(() -> new IllegalArgumentException("Subtask not found: " + subtaskId));
 
+        if (title != null && !title.isBlank()) {
+            subtask.setTitle(title.trim());
+        }
         if (status != null) {
             subtask.setStatus(status);
             subtask.setCompletedAt(status == Task.Status.COMPLETED ? Instant.now() : null);

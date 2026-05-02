@@ -41,7 +41,13 @@ public class TaskController {
         Task.Priority priority = body.getPriority() != null
             ? Task.Priority.valueOf(body.getPriority().toUpperCase())
             : null;
-        return taskService.update(id, status, priority, body.getNote(), body.getTags());
+        return taskService.update(id, status, priority, body.getNote(), body.getTags(), body.getTitle());
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable String id) {
+        taskService.deleteTask(id);
     }
 
     @GetMapping("/stats/weekly")
@@ -66,7 +72,7 @@ public class TaskController {
         Task.Status status = body.getStatus() != null
             ? Task.Status.valueOf(body.getStatus().toUpperCase())
             : null;
-        return taskService.updateSubtask(id, subtaskId, status);
+        return taskService.updateSubtask(id, subtaskId, status, body.getTitle());
     }
 
     @DeleteMapping("/{id}/subtasks/{subtaskId}")
