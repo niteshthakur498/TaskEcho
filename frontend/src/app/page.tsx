@@ -42,8 +42,10 @@ export default function Home() {
   const [priority, setPriority]       = useState<TaskPriority>("MEDIUM");
   const [loading, setLoading]         = useState(true);
   const [error, setError]             = useState<string | null>(null);
-  const [animatingId, setAnimatingId] = useState<string | null>(null);
-  const [filterToday, setFilterToday] = useState(false);
+  const [animatingId, setAnimatingId]     = useState<string | null>(null);
+  const [confirmingId, setConfirmingId]   = useState<string | null>(null);
+  const [noteInput, setNoteInput]         = useState("");
+  const [filterToday, setFilterToday]     = useState(false);
   const [sortByPriority, setSortByPriority] = useState(false);
   const [showAllPending, setShowAllPending] = useState(false);
 
@@ -75,14 +77,43 @@ export default function Home() {
     } catch (e) { setError((e as Error).message); }
   }
 
-  async function toggleStatus(task: Task) {
-    const newStatus = task.status === "PENDING" ? "COMPLETED" : "PENDING";
+  function requestComplete(task: Task) {
+    setConfirmingId(task.id);
+    setNoteInput("");
+  }
+
+  function cancelConfirm() {
+    setConfirmingId(null);
+    setNoteInput("");
+  }
+
+  async function completeWithNote(task: Task) {
+    setConfirmingId(null);
+    setAnimatingId(task.id);
+    try {
+      const body: Record<string, string> = { status: "COMPLETED" };
+      if (noteInput.trim()) body.note = noteInput.trim();
+      const res = await fetch(`${API}/${task.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const updated = (await res.json()) as Task;
+      setTasks(prev => prev.map(t => t.id === task.id ? updated : t));
+      setNoteInput("");
+      refreshStats();
+    } catch (e) { setError((e as Error).message); }
+    finally { setTimeout(() => setAnimatingId(null), 300); }
+  }
+
+  async function revertToPending(task: Task) {
     setAnimatingId(task.id);
     try {
       const res = await fetch(`${API}/${task.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: "PENDING" }),
       });
       if (!res.ok) throw new Error(`${res.status}`);
       const updated = (await res.json()) as Task;
@@ -263,30 +294,77 @@ export default function Home() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  {displayedPending.map(task => (
-                    <div
-                      key={task.id}
-                      className={`bg-white rounded-xl border border-gray-100 shadow-sm px-4 py-3.5 flex items-center gap-3 hover:shadow-md transition-all duration-200 ${
-                        animatingId === task.id ? "opacity-50 scale-95" : ""
-                      }`}
-                    >
-                      <button
-                        onClick={() => toggleStatus(task)}
-                        className="w-5 h-5 rounded border-2 border-gray-300 hover:border-indigo-500 flex-shrink-0 transition-colors"
-                        aria-label={`Complete ${task.title}`}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
-                        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                          <span>📅</span>
-                          {fmtDate(task.createdAt)}
-                        </p>
+                  {displayedPending.map(task => {
+                    const isConfirming = confirmingId === task.id;
+                    return (
+                      <div
+                        key={task.id}
+                        className={`bg-white rounded-xl border shadow-sm transition-all duration-200 ${
+                          isConfirming ? "border-indigo-300 shadow-indigo-100" : "border-gray-100 hover:shadow-md"
+                        } ${animatingId === task.id ? "opacity-50 scale-95" : ""}`}
+                      >
+                        {/* Main task row */}
+                        <div className="px-4 py-3.5 flex items-center gap-3">
+                          <button
+                            onClick={() => isConfirming ? cancelConfirm() : requestComplete(task)}
+                            className={`w-5 h-5 rounded border-2 flex-shrink-0 transition-colors ${
+                              isConfirming
+                                ? "border-indigo-500 bg-indigo-50"
+                                : "border-gray-300 hover:border-indigo-500"
+                            }`}
+                            aria-label={`Complete ${task.title}`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
+                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                              <span>📅</span>
+                              {fmtDate(task.createdAt)}
+                            </p>
+                          </div>
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_COLOR[task.priority]}`}>
+                            {PRIORITY_LABEL[task.priority]}
+                          </span>
+                        </div>
+
+                        {/* Inline note panel — shown when confirming */}
+                        {isConfirming && (
+                          <div className="px-4 pb-4 animate-fade-in">
+                            <div className="border-t border-indigo-100 pt-3">
+                              <p className="text-xs font-medium text-indigo-700 mb-2">
+                                Add a completion note <span className="text-gray-400 font-normal">(optional)</span>
+                              </p>
+                              <textarea
+                                autoFocus
+                                rows={2}
+                                value={noteInput}
+                                onChange={e => setNoteInput(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); completeWithNote(task); }
+                                  if (e.key === "Escape") cancelConfirm();
+                                }}
+                                placeholder="What did you accomplish? Any blockers? (optional)"
+                                className="w-full text-sm text-gray-800 placeholder-gray-400 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all"
+                              />
+                              <div className="flex gap-2 mt-2">
+                                <button
+                                  onClick={() => completeWithNote(task)}
+                                  className="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-lg transition-colors active:scale-95"
+                                >
+                                  ✓ Mark Complete
+                                </button>
+                                <button
+                                  onClick={cancelConfirm}
+                                  className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_COLOR[task.priority]}`}>
-                        {PRIORITY_LABEL[task.priority]}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}
@@ -306,29 +384,39 @@ export default function Home() {
                   {completed.map(task => (
                     <div
                       key={task.id}
-                      className={`bg-emerald-50 rounded-xl border border-emerald-100 px-4 py-3.5 flex items-center gap-3 transition-all duration-200 ${
+                      className={`bg-emerald-50 rounded-xl border border-emerald-100 px-4 py-3.5 transition-all duration-200 ${
                         animatingId === task.id ? "opacity-50 scale-95" : ""
                       }`}
                     >
-                      <button
-                        onClick={() => toggleStatus(task)}
-                        className="w-5 h-5 rounded border-2 border-emerald-500 bg-emerald-500 flex-shrink-0 flex items-center justify-center transition-colors hover:bg-emerald-400"
-                        aria-label={`Undo ${task.title}`}
-                      >
-                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-400 line-through truncate">{task.title}</p>
-                        <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                          <span>✓</span>
-                          {task.completedAt ? fmtDate(task.completedAt) : fmtDate(task.createdAt)}
-                        </p>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => revertToPending(task)}
+                          className="w-5 h-5 rounded border-2 border-emerald-500 bg-emerald-500 flex-shrink-0 flex items-center justify-center transition-colors hover:bg-emerald-400"
+                          aria-label={`Undo ${task.title}`}
+                        >
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-gray-400 line-through truncate">{task.title}</p>
+                          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                            <span>✓</span>
+                            {task.completedAt ? fmtDate(task.completedAt) : fmtDate(task.createdAt)}
+                          </p>
+                        </div>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_COLOR[task.priority]}`}>
+                          {PRIORITY_LABEL[task.priority]}
+                        </span>
                       </div>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_COLOR[task.priority]}`}>
-                        {PRIORITY_LABEL[task.priority]}
-                      </span>
+                      {task.completionNote && (
+                        <div className="mt-2 ml-8 px-3 py-2 bg-white border border-emerald-100 rounded-lg">
+                          <p className="text-xs text-gray-500 leading-relaxed">
+                            <span className="font-medium text-emerald-600">Note: </span>
+                            {task.completionNote}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

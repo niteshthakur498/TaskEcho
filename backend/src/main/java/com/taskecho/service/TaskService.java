@@ -22,7 +22,7 @@ public class TaskService {
         return new ArrayList<>(store.values());
     }
 
-    public Task update(String id, Task.Status status, Task.Priority priority) {
+    public Task update(String id, Task.Status status, Task.Priority priority, String note) {
         Task task = store.get(id);
         if (task == null) throw new IllegalArgumentException("Task not found: " + id);
 
@@ -30,8 +30,10 @@ public class TaskService {
             task.setStatus(status);
             if (status == Task.Status.COMPLETED) {
                 task.setCompletedAt(Instant.now());
+                task.setCompletionNote(note);
             } else {
                 task.setCompletedAt(null);
+                task.setCompletionNote(null);
             }
         }
         if (priority != null) {
