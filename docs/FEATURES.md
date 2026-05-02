@@ -108,31 +108,28 @@ This document tracks all features implemented in TaskEcho, their status, and whe
 
 ---
 
+### 6. Edit & Delete Tasks / Subtasks
+**Status:** Released  
+**Version:** 1.6.0  
+**Branch:** `feat/edit-delete-tasks`  
+**Date:** May 2026
+
+**Features:**
+- Inline edit task title via 3-dot menu → "Edit title" (Enter/blur saves, Escape cancels)
+- Delete pending tasks via 3-dot menu → "Delete" with inline confirmation strip
+- Delete completed tasks via trash icon (direct, no confirmation)
+- Click-to-edit subtask titles inline (non-completed subtasks only)
+
+**Details:** [Edit & Delete Tasks Feature](features/edit-delete-tasks.md)
+
+**API Changes:**
+- New: `DELETE /tasks/{id}` — permanently delete a task
+- Extended: `PUT /tasks/{id}` — now accepts optional `title` field to rename
+- Extended: `PUT /tasks/{id}/subtasks/{stId}` — now accepts optional `title` field to rename
+
+---
+
 ## 🚀 Upcoming Features
-
-### Task Deletion
-**Status:** Planned  
-**Priority:** High  
-**Estimated Version:** 1.1.0
-
-- Delete completed tasks
-- Soft delete (archive instead of hard delete)
-- Undo delete for 30 seconds
-- Bulk delete completed tasks
-
----
-
-### Task Editing
-**Status:** Planned  
-**Priority:** High  
-**Estimated Version:** 1.2.0
-
-- Edit task title after creation
-- Edit task description/notes
-- Show last modified date
-- Edit history (optional)
-
----
 
 ### Task Tagging
 **Status:** In Development  
@@ -214,12 +211,11 @@ When proposing a new feature:
 | 0.0.1 | May 2026 | Core task management | Released |
 | 1.0.0 | May 2026 | Task completion toggle | Merged (Pending) |
 | 1.1.0 | May 2026 | Modern UI redesign (Tailwind) | In Development |
-| 1.2.0 | TBD | Task deletion | Planned |
-| 1.3.0 | TBD | Task editing | Planned |
 | 1.4.0 | May 2026 | Task tagging (max 3, expandable details) | In Development |
 | 1.5.0 | May 2026 | Subtasks (nested checklist per task) | In Development |
-| 1.6.0 | TBD | Advanced filtering | Planned |
-| 1.7.0 | TBD | Priority levels | Planned |
+| 1.6.0 | May 2026 | Edit & delete tasks / subtasks | Released |
+| 1.7.0 | TBD | Advanced filtering | Planned |
+| 1.8.0 | TBD | Priority levels | Planned |
 | 2.0.0 | TBD | Recurring tasks | Planned |
 
 ---

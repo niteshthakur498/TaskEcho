@@ -84,13 +84,44 @@ function SubtaskRow({
   taskId,
   onToggle,
   onDelete,
+  onEdit,
 }: {
   subtask: Subtask;
   taskId: string;
   onToggle: (taskId: string, subtask: Subtask) => void;
   onDelete: (taskId: string, subtaskId: string) => void;
+  onEdit: (taskId: string, subtaskId: string, title: string) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [editVal, setEditVal] = useState(subtask.title);
   const done = subtask.status === "COMPLETED";
+
+  function commitEdit() {
+    const v = editVal.trim();
+    if (v && v !== subtask.title) onEdit(taskId, subtask.id, v);
+    else setEditVal(subtask.title);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-2">
+        <div className="w-4 h-4 rounded border-2 border-dashed border-gray-200 flex-shrink-0" />
+        <input
+          autoFocus
+          value={editVal}
+          onChange={e => setEditVal(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === "Enter") { e.preventDefault(); commitEdit(); }
+            if (e.key === "Escape") { setEditVal(subtask.title); setEditing(false); }
+          }}
+          onBlur={commitEdit}
+          className="flex-1 text-xs text-gray-800 bg-gray-50 border border-indigo-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-2 group">
       <button
@@ -108,7 +139,13 @@ function SubtaskRow({
           </svg>
         )}
       </button>
-      <span className={`text-xs flex-1 min-w-0 truncate ${done ? "line-through text-gray-400" : "text-gray-600"}`}>
+      <span
+        onClick={() => { if (!done) { setEditVal(subtask.title); setEditing(true); } }}
+        className={`text-xs flex-1 min-w-0 truncate ${
+          done ? "line-through text-gray-400" : "text-gray-600 cursor-pointer hover:text-indigo-600"
+        }`}
+        title={done ? undefined : "Click to edit"}
+      >
         {subtask.title}
       </span>
       <button
@@ -149,6 +186,11 @@ export default function Home() {
   const [activeMenuId, setActiveMenuId]           = useState<string | null>(null);
   const [addingSubtaskForId, setAddingSubtaskForId] = useState<string | null>(null);
   const [subtaskInput, setSubtaskInput]           = useState("");
+
+  // ── Edit / delete state ──────────────────────────────────────────────────
+  const [editingTaskId, setEditingTaskId]   = useState<string | null>(null);
+  const [editTaskInput, setEditTaskInput]   = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -305,6 +347,47 @@ export default function Home() {
     try {
       const res = await fetch(`${API}/${taskId}/subtasks/${subtaskId}`, {
         method: "DELETE",
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const updated = (await res.json()) as Task;
+      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+    } catch (e) { setError((e as Error).message); }
+  }
+
+  async function saveTaskEdit(taskId: string) {
+    const title = editTaskInput.trim();
+    setEditingTaskId(null);
+    if (!title) return;
+    const original = tasks.find(t => t.id === taskId);
+    if (!original || title === original.title) return;
+    try {
+      const res = await fetch(`${API}/${taskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const updated = (await res.json()) as Task;
+      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+    } catch (e) { setError((e as Error).message); }
+  }
+
+  async function deleteTask(taskId: string) {
+    setConfirmDeleteId(null);
+    try {
+      const res = await fetch(`${API}/${taskId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`${res.status}`);
+      setTasks(prev => prev.filter(t => t.id !== taskId));
+      refreshStats();
+    } catch (e) { setError((e as Error).message); }
+  }
+
+  async function editSubtask(taskId: string, subtaskId: string, title: string) {
+    try {
+      const res = await fetch(`${API}/${taskId}/subtasks/${subtaskId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
       });
       if (!res.ok) throw new Error(`${res.status}`);
       const updated = (await res.json()) as Task;
@@ -571,7 +654,21 @@ export default function Home() {
 
                           {/* Title and meta */}
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
+                            {editingTaskId === task.id ? (
+                              <input
+                                autoFocus
+                                value={editTaskInput}
+                                onChange={e => setEditTaskInput(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === "Enter") { e.preventDefault(); saveTaskEdit(task.id); }
+                                  if (e.key === "Escape") setEditingTaskId(null);
+                                }}
+                                onBlur={() => saveTaskEdit(task.id)}
+                                className="w-full text-sm font-medium text-gray-900 bg-gray-50 border border-indigo-300 rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                              />
+                            ) : (
+                              <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
+                            )}
                             <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
                               <span>📅</span>
                               {fmtDate(task.createdAt)}
@@ -608,9 +705,25 @@ export default function Home() {
                             </button>
                             {activeMenuId === task.id && (
                               <div
-                                className="absolute right-0 top-8 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[136px]"
+                                className="absolute right-0 top-8 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[148px]"
                                 onClick={e => e.stopPropagation()}
                               >
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    setEditingTaskId(task.id);
+                                    setEditTaskInput(task.title);
+                                    setConfirmDeleteId(null);
+                                    setConfirmingId(null);
+                                    setActiveMenuId(null);
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                >
+                                  <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 11l6-6 3 3-6 6H9v-3z" />
+                                  </svg>
+                                  Edit title
+                                </button>
                                 <button
                                   onClick={e => {
                                     e.stopPropagation();
@@ -624,6 +737,22 @@ export default function Home() {
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                                   </svg>
                                   Add Subtask
+                                </button>
+                                <div className="border-t border-gray-100 my-1" />
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    setConfirmDeleteId(task.id);
+                                    setConfirmingId(null);
+                                    setEditingTaskId(null);
+                                    setActiveMenuId(null);
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-xs text-red-500 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4h6v3M3 7h18" />
+                                  </svg>
+                                  Delete
                                 </button>
                               </div>
                             )}
@@ -641,6 +770,7 @@ export default function Home() {
                                   taskId={task.id}
                                   onToggle={toggleSubtask}
                                   onDelete={deleteSubtask}
+                                  onEdit={editSubtask}
                                 />
                               ))}
                               {isAddingSubtask && (
@@ -705,6 +835,31 @@ export default function Home() {
                                 </div>
                               </div>
                             )}
+                          </div>
+                        )}
+
+                        {/* Delete confirmation strip */}
+                        {confirmDeleteId === task.id && (
+                          <div className="px-4 pb-4 animate-fade-in">
+                            <div className="border-t border-red-100 pt-3">
+                              <p className="text-xs font-medium text-red-600 mb-2">
+                                Delete this task permanently?
+                              </p>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => deleteTask(task.id)}
+                                  className="flex-1 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors active:scale-95"
+                                >
+                                  Delete
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  className="px-4 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 text-xs font-medium rounded-lg transition-colors"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         )}
 
@@ -805,6 +960,15 @@ export default function Home() {
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_COLOR[task.priority]}`}>
                             {PRIORITY_LABEL[task.priority]}
                           </span>
+                          <button
+                            onClick={() => deleteTask(task.id)}
+                            className="w-6 h-6 flex items-center justify-center text-gray-300 hover:text-red-400 rounded-md hover:bg-red-50 transition-colors flex-shrink-0"
+                            aria-label={`Delete ${task.title}`}
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4h6v3M3 7h18" />
+                            </svg>
+                          </button>
                         </div>
 
                         {/* More details toggle for completed tasks */}
