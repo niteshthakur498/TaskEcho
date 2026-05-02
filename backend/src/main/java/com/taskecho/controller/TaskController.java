@@ -42,7 +42,8 @@ public class TaskController {
         Task.Priority priority = body.containsKey("priority")
             ? Task.Priority.valueOf(body.get("priority").toUpperCase())
             : null;
-        return taskService.update(id, status, priority);
+        String note = body.getOrDefault("note", null);
+        return taskService.update(id, status, priority, note);
     }
 
     @GetMapping("/stats/weekly")
