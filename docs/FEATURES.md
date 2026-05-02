@@ -111,15 +111,24 @@ This document tracks all features implemented in TaskEcho, their status, and whe
 
 ---
 
-### Task Categories/Tags
-**Status:** Planned  
-**Priority:** Medium  
-**Estimated Version:** 1.3.0
+### Task Tagging
+**Status:** In Development  
+**Version:** 1.4.0  
+**Branch:** `feat/task-tagging`  
+**Date:** May 2026
 
-- Assign tags to tasks
-- Filter tasks by tag
-- Color-coded tags
-- Bulk tag operations
+**Features:**
+- Add up to 3 optional tags per task via an expandable tag panel in the add form
+- Tags hidden from main task card view — revealed only via "More details" toggle
+- Colour-coded tag pills with inline chip editing (Enter/comma to add, backspace/× to remove)
+- Server-side sanitisation: trimmed, lowercased, deduplicated, max-3 enforced
+- Unified add-task form card (input + tags + toolbar in one cohesive UI)
+
+**Details:** [Task Tagging Feature](features/task-tagging.md)
+
+**API Changes:**
+- Extended: `POST /tasks` — now accepts optional `tags: string[]`
+- Extended: `PUT /tasks/{id}` — now accepts optional `tags: string[]`
 
 ---
 
@@ -184,7 +193,7 @@ When proposing a new feature:
 | 1.1.0 | May 2026 | Modern UI redesign (Tailwind) | In Development |
 | 1.2.0 | TBD | Task deletion | Planned |
 | 1.3.0 | TBD | Task editing | Planned |
-| 1.4.0 | TBD | Tags/categories | Planned |
+| 1.4.0 | May 2026 | Task tagging (max 3, expandable details) | In Development |
 | 1.5.0 | TBD | Advanced filtering | Planned |
 | 1.6.0 | TBD | Priority levels | Planned |
 | 2.0.0 | TBD | Recurring tasks | Planned |
