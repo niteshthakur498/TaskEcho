@@ -48,4 +48,29 @@ public class TaskController {
     public List<Map<String, Object>> weeklyStats() {
         return taskService.getWeeklyStats();
     }
+
+    // ── Subtask endpoints ─────────────────────────────────────────────────────
+
+    @PostMapping("/{id}/subtasks")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Task addSubtask(@PathVariable String id, @RequestBody TaskRequest body) {
+        return taskService.addSubtask(id, body.getTitle());
+    }
+
+    @PutMapping("/{id}/subtasks/{subtaskId}")
+    public Task updateSubtask(
+        @PathVariable String id,
+        @PathVariable String subtaskId,
+        @RequestBody TaskRequest body
+    ) {
+        Task.Status status = body.getStatus() != null
+            ? Task.Status.valueOf(body.getStatus().toUpperCase())
+            : null;
+        return taskService.updateSubtask(id, subtaskId, status);
+    }
+
+    @DeleteMapping("/{id}/subtasks/{subtaskId}")
+    public Task deleteSubtask(@PathVariable String id, @PathVariable String subtaskId) {
+        return taskService.deleteSubtask(id, subtaskId);
+    }
 }

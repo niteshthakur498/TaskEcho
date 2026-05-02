@@ -1,5 +1,6 @@
 package com.taskecho.service;
 
+import com.taskecho.model.Subtask;
 import com.taskecho.model.Task;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +46,13 @@ public class TaskService {
             if (status == Task.Status.COMPLETED) {
                 task.setCompletedAt(Instant.now());
                 task.setCompletionNote(note);
+                // Cascade completion to all pending subtasks
+                task.getSubtasks().forEach(s -> {
+                    if (s.getStatus() != Task.Status.COMPLETED) {
+                        s.setStatus(Task.Status.COMPLETED);
+                        s.setCompletedAt(Instant.now());
+                    }
+                });
             } else {
                 task.setCompletedAt(null);
                 task.setCompletionNote(null);
@@ -58,6 +66,43 @@ public class TaskService {
         }
         return task;
     }
+
+    // ── Subtask operations ────────────────────────────────────────────────────
+
+    public Task addSubtask(String taskId, String title) {
+        Task task = store.get(taskId);
+        if (task == null) throw new IllegalArgumentException("Task not found: " + taskId);
+        if (task.getStatus() == Task.Status.COMPLETED) {
+            throw new IllegalStateException("Cannot add subtask to a completed task");
+        }
+        task.addSubtask(new Subtask(title.trim()));
+        return task;
+    }
+
+    public Task updateSubtask(String taskId, String subtaskId, Task.Status status) {
+        Task task = store.get(taskId);
+        if (task == null) throw new IllegalArgumentException("Task not found: " + taskId);
+
+        Subtask subtask = task.getSubtasks().stream()
+            .filter(s -> s.getId().equals(subtaskId))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Subtask not found: " + subtaskId));
+
+        if (status != null) {
+            subtask.setStatus(status);
+            subtask.setCompletedAt(status == Task.Status.COMPLETED ? Instant.now() : null);
+        }
+        return task;
+    }
+
+    public Task deleteSubtask(String taskId, String subtaskId) {
+        Task task = store.get(taskId);
+        if (task == null) throw new IllegalArgumentException("Task not found: " + taskId);
+        task.removeSubtask(subtaskId);
+        return task;
+    }
+
+    // ── Weekly stats ──────────────────────────────────────────────────────────
 
     public List<Map<String, Object>> getWeeklyStats() {
         ZoneId zone = ZoneId.systemDefault();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import type { Task, TaskPriority, DayStat } from "./types";
+import type { Task, Subtask, TaskPriority, DayStat } from "./types";
 
 const API = "http://localhost:8080/tasks";
 const MAX_TAGS = 3;
@@ -78,6 +78,50 @@ function TagPill({
   );
 }
 
+// ── Single subtask row (used in pending task cards) ───────────────────────
+function SubtaskRow({
+  subtask,
+  taskId,
+  onToggle,
+  onDelete,
+}: {
+  subtask: Subtask;
+  taskId: string;
+  onToggle: (taskId: string, subtask: Subtask) => void;
+  onDelete: (taskId: string, subtaskId: string) => void;
+}) {
+  const done = subtask.status === "COMPLETED";
+  return (
+    <div className="flex items-center gap-2 group">
+      <button
+        onClick={() => onToggle(taskId, subtask)}
+        className={`w-4 h-4 rounded border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
+          done
+            ? "border-emerald-500 bg-emerald-500"
+            : "border-gray-300 hover:border-indigo-400"
+        }`}
+        aria-label={done ? `Undo subtask: ${subtask.title}` : `Complete subtask: ${subtask.title}`}
+      >
+        {done && (
+          <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        )}
+      </button>
+      <span className={`text-xs flex-1 min-w-0 truncate ${done ? "line-through text-gray-400" : "text-gray-600"}`}>
+        {subtask.title}
+      </span>
+      <button
+        onClick={() => onDelete(taskId, subtask.id)}
+        className="opacity-0 group-hover:opacity-100 w-4 h-4 flex items-center justify-center text-gray-300 hover:text-red-400 transition-all text-base leading-none"
+        aria-label={`Delete subtask: ${subtask.title}`}
+      >
+        ×
+      </button>
+    </div>
+  );
+}
+
 export default function Home() {
   const [tasks, setTasks]               = useState<Task[]>([]);
   const [stats, setStats]               = useState<DayStat[]>([]);
@@ -101,6 +145,11 @@ export default function Home() {
   // ── Expanded details per task card ──────────────────────────────────────
   const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null);
 
+  // ── Subtask state ────────────────────────────────────────────────────────
+  const [activeMenuId, setActiveMenuId]           = useState<string | null>(null);
+  const [addingSubtaskForId, setAddingSubtaskForId] = useState<string | null>(null);
+  const [subtaskInput, setSubtaskInput]           = useState("");
+
   useEffect(() => {
     Promise.all([
       fetch(API).then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() as Promise<Task[]>; }),
@@ -110,6 +159,14 @@ export default function Home() {
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  // Close the 3-dot menu when clicking outside it
+  useEffect(() => {
+    if (!activeMenuId) return;
+    const close = () => setActiveMenuId(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [activeMenuId]);
 
   // ── Tag input helpers ────────────────────────────────────────────────────
   function commitTag() {
@@ -141,7 +198,6 @@ export default function Home() {
     const title = input.trim();
     if (!title) return;
 
-    // commit any in-progress tag text first
     const pendingTag = tagInput.trim().toLowerCase().replace(/^#+/, "");
     const finalTags = pendingTag && newTags.length < MAX_TAGS && !newTags.includes(pendingTag)
       ? [...newTags, pendingTag.slice(0, MAX_TAG_LENGTH)]
@@ -177,6 +233,7 @@ export default function Home() {
 
   async function completeWithNote(task: Task) {
     setConfirmingId(null);
+    setAddingSubtaskForId(null);
     setAnimatingId(task.id);
     try {
       const body: Record<string, unknown> = { status: "COMPLETED" };
@@ -209,6 +266,50 @@ export default function Home() {
       refreshStats();
     } catch (e) { setError((e as Error).message); }
     finally { setTimeout(() => setAnimatingId(null), 300); }
+  }
+
+  // ── Subtask operations ────────────────────────────────────────────────────
+
+  async function addSubtask(taskId: string) {
+    const title = subtaskInput.trim();
+    if (!title) return;
+    try {
+      const res = await fetch(`${API}/${taskId}/subtasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const updated = (await res.json()) as Task;
+      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+      setSubtaskInput("");
+      // Keep input open so user can add more
+    } catch (e) { setError((e as Error).message); }
+  }
+
+  async function toggleSubtask(taskId: string, subtask: Subtask) {
+    const newStatus = subtask.status === "COMPLETED" ? "PENDING" : "COMPLETED";
+    try {
+      const res = await fetch(`${API}/${taskId}/subtasks/${subtask.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const updated = (await res.json()) as Task;
+      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+    } catch (e) { setError((e as Error).message); }
+  }
+
+  async function deleteSubtask(taskId: string, subtaskId: string) {
+    try {
+      const res = await fetch(`${API}/${taskId}/subtasks/${subtaskId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const updated = (await res.json()) as Task;
+      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
+    } catch (e) { setError((e as Error).message); }
   }
 
   async function refreshStats() {
@@ -327,7 +428,7 @@ export default function Home() {
               />
             </div>
 
-            {/* Tag expansion area — sits between input and toolbar */}
+            {/* Tag expansion area */}
             {showDetails && (
               <div className="px-4 pb-2.5 border-t border-dashed border-gray-200 pt-2.5">
                 <div className="flex flex-wrap items-center gap-1.5">
@@ -353,10 +454,9 @@ export default function Home() {
               </div>
             )}
 
-            {/* Toolbar row — always visible */}
+            {/* Toolbar row */}
             <div className="px-3 py-2 border-t border-gray-100 flex items-center justify-between gap-2">
               <div className="flex items-center gap-1">
-                {/* Priority */}
                 <select
                   value={priority}
                   onChange={e => setPriority(e.target.value as TaskPriority)}
@@ -367,10 +467,8 @@ export default function Home() {
                   <option value="HIGH">High priority</option>
                 </select>
 
-                {/* Divider */}
                 <span className="w-px h-3.5 bg-gray-200 mx-1" />
 
-                {/* Tags toggle */}
                 <button
                   type="button"
                   onClick={() => {
@@ -395,7 +493,6 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Add Task button */}
               <button
                 onClick={addTask}
                 disabled={loading || !input.trim()}
@@ -444,9 +541,13 @@ export default function Home() {
                 </div>
                 <div className="space-y-2">
                   {displayedPending.map(task => {
-                    const isConfirming  = confirmingId === task.id;
-                    const isExpanded    = expandedTaskId === task.id;
-                    const hasTags       = task.tags && task.tags.length > 0;
+                    const isConfirming     = confirmingId === task.id;
+                    const isExpanded       = expandedTaskId === task.id;
+                    const hasTags          = task.tags && task.tags.length > 0;
+                    const hasSubtasks      = task.subtasks && task.subtasks.length > 0;
+                    const isAddingSubtask  = addingSubtaskForId === task.id;
+                    const doneSubtasks     = task.subtasks?.filter(s => s.status === "COMPLETED").length ?? 0;
+                    const totalSubtasks    = task.subtasks?.length ?? 0;
                     return (
                       <div
                         key={task.id}
@@ -455,7 +556,48 @@ export default function Home() {
                         } ${animatingId === task.id ? "opacity-50 scale-95" : ""}`}
                       >
                         {/* Main task row */}
-                        <div className="px-4 py-3.5 flex items-center gap-3">
+                        <div className="px-3 py-3.5 flex items-center gap-2">
+
+                          {/* 3-dot menu */}
+                          <div className="relative flex-shrink-0">
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                setActiveMenuId(prev => prev === task.id ? null : task.id);
+                              }}
+                              className="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors"
+                              aria-label="Task options"
+                            >
+                              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <circle cx="12" cy="5" r="1.5" />
+                                <circle cx="12" cy="12" r="1.5" />
+                                <circle cx="12" cy="19" r="1.5" />
+                              </svg>
+                            </button>
+                            {activeMenuId === task.id && (
+                              <div
+                                className="absolute left-0 top-7 z-20 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[136px]"
+                                onClick={e => e.stopPropagation()}
+                              >
+                                <button
+                                  onClick={e => {
+                                    e.stopPropagation();
+                                    setAddingSubtaskForId(task.id);
+                                    setSubtaskInput("");
+                                    setActiveMenuId(null);
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 flex items-center gap-2 transition-colors"
+                                >
+                                  <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                                  </svg>
+                                  Add Subtask
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Completion checkbox */}
                           <button
                             onClick={() => isConfirming ? cancelConfirm() : requestComplete(task)}
                             className={`w-5 h-5 rounded border-2 flex-shrink-0 transition-colors ${
@@ -465,19 +607,78 @@ export default function Home() {
                             }`}
                             aria-label={`Complete ${task.title}`}
                           />
+
+                          {/* Title and meta */}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900 truncate">{task.title}</p>
-                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
                               <span>📅</span>
                               {fmtDate(task.createdAt)}
+                              {totalSubtasks > 0 && (
+                                <>
+                                  <span className="text-gray-200">·</span>
+                                  <span className={doneSubtasks === totalSubtasks ? "text-emerald-500" : "text-gray-400"}>
+                                    {doneSubtasks}/{totalSubtasks} subtasks
+                                  </span>
+                                </>
+                              )}
                             </p>
                           </div>
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_COLOR[task.priority]}`}>
+
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${PRIORITY_COLOR[task.priority]}`}>
                             {PRIORITY_LABEL[task.priority]}
                           </span>
                         </div>
 
-                        {/* More details toggle — only if task has tags or is useful */}
+                        {/* Subtasks section */}
+                        {(hasSubtasks || isAddingSubtask) && (
+                          <div className="px-3 pb-3 border-t border-gray-50">
+                            <div className="ml-8 space-y-1.5 pt-2">
+                              {task.subtasks.map(subtask => (
+                                <SubtaskRow
+                                  key={subtask.id}
+                                  subtask={subtask}
+                                  taskId={task.id}
+                                  onToggle={toggleSubtask}
+                                  onDelete={deleteSubtask}
+                                />
+                              ))}
+                              {isAddingSubtask && (
+                                <div className="flex items-center gap-2 pt-0.5">
+                                  <div className="w-4 h-4 rounded border-2 border-dashed border-gray-200 flex-shrink-0" />
+                                  <input
+                                    autoFocus
+                                    type="text"
+                                    placeholder="Subtask title…"
+                                    value={subtaskInput}
+                                    onChange={e => setSubtaskInput(e.target.value)}
+                                    onKeyDown={e => {
+                                      if (e.key === "Enter") { e.preventDefault(); addSubtask(task.id); }
+                                      if (e.key === "Escape") { setAddingSubtaskForId(null); setSubtaskInput(""); }
+                                    }}
+                                    className="flex-1 text-xs text-gray-800 placeholder-gray-400 bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-300 focus:border-indigo-300"
+                                  />
+                                  <button
+                                    onClick={() => addSubtask(task.id)}
+                                    disabled={!subtaskInput.trim()}
+                                    className="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs font-medium rounded transition-colors"
+                                  >
+                                    Add
+                                  </button>
+                                  <button
+                                    onClick={() => { setAddingSubtaskForId(null); setSubtaskInput(""); }}
+                                    className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-600 text-base leading-none"
+                                    aria-label="Cancel adding subtask"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* More details toggle (tags) */}
                         {hasTags && (
                           <div className="px-4 pb-2">
                             <button
@@ -514,6 +715,11 @@ export default function Home() {
                               <p className="text-xs font-medium text-indigo-700 mb-2">
                                 Add a completion note <span className="text-gray-400 font-normal">(optional)</span>
                               </p>
+                              {totalSubtasks > 0 && doneSubtasks < totalSubtasks && (
+                                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-2">
+                                  {totalSubtasks - doneSubtasks} subtask{totalSubtasks - doneSubtasks !== 1 ? "s" : ""} will also be marked complete.
+                                </p>
+                              )}
                               <textarea
                                 autoFocus
                                 rows={2}
@@ -562,9 +768,10 @@ export default function Home() {
                 </h2>
                 <div className="space-y-2">
                   {completed.map(task => {
-                    const isExpanded = expandedTaskId === task.id;
-                    const hasTags    = task.tags && task.tags.length > 0;
-                    const hasDetails = hasTags || !!task.completionNote;
+                    const isExpanded  = expandedTaskId === task.id;
+                    const hasTags     = task.tags && task.tags.length > 0;
+                    const hasSubtasks = task.subtasks && task.subtasks.length > 0;
+                    const hasDetails  = hasTags || !!task.completionNote || hasSubtasks;
                     return (
                       <div
                         key={task.id}
@@ -584,9 +791,15 @@ export default function Home() {
                           </button>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-400 line-through truncate">{task.title}</p>
-                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                            <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
                               <span>✓</span>
                               {task.completedAt ? fmtDate(task.completedAt) : fmtDate(task.createdAt)}
+                              {hasSubtasks && (
+                                <>
+                                  <span className="text-gray-300">·</span>
+                                  <span>{task.subtasks.length} subtask{task.subtasks.length !== 1 ? "s" : ""}</span>
+                                </>
+                              )}
                             </p>
                           </div>
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_COLOR[task.priority]}`}>
@@ -612,13 +825,32 @@ export default function Home() {
                             </button>
 
                             {isExpanded && (
-                              <div className="mt-2 space-y-2">
+                              <div className="mt-2 space-y-2.5">
                                 {task.completionNote && (
                                   <div className="px-3 py-2 bg-white border border-emerald-100 rounded-lg">
                                     <p className="text-xs text-gray-500 leading-relaxed">
                                       <span className="font-medium text-emerald-600">Note: </span>
                                       {task.completionNote}
                                     </p>
+                                  </div>
+                                )}
+                                {hasSubtasks && (
+                                  <div>
+                                    <p className="text-xs text-gray-400 font-medium mb-1.5">
+                                      Subtasks ({task.subtasks.length})
+                                    </p>
+                                    <div className="space-y-1">
+                                      {task.subtasks.map(st => (
+                                        <div key={st.id} className="flex items-center gap-2">
+                                          <div className="w-4 h-4 rounded border-2 border-emerald-400 bg-emerald-400 flex-shrink-0 flex items-center justify-center">
+                                            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                          </div>
+                                          <span className="text-xs line-through text-gray-400 truncate">{st.title}</span>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
                                 {hasTags && (

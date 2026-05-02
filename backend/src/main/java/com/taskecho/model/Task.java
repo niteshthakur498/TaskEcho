@@ -19,6 +19,7 @@ public class Task {
     private Instant        completedAt;
     private String         completionNote;
     private List<String>   tags;
+    private List<Subtask>  subtasks;
 
     public Task(String title, Priority priority) {
         this.id        = UUID.randomUUID().toString();
@@ -27,6 +28,7 @@ public class Task {
         this.priority  = priority != null ? priority : Priority.MEDIUM;
         this.createdAt = Instant.now();
         this.tags      = new ArrayList<>();
+        this.subtasks  = new ArrayList<>();
     }
 
     // ── Getters ──────────────────────────────────────────────────────────────
@@ -39,6 +41,7 @@ public class Task {
     public Instant       getCompletedAt()    { return completedAt; }
     public String        getCompletionNote() { return completionNote; }
     public List<String>  getTags()           { return Collections.unmodifiableList(tags); }
+    public List<Subtask> getSubtasks()       { return Collections.unmodifiableList(subtasks); }
 
     // ── Setters ──────────────────────────────────────────────────────────────
 
@@ -48,4 +51,9 @@ public class Task {
     public void setCompletedAt(Instant completedAt)      { this.completedAt = completedAt; }
     public void setCompletionNote(String completionNote) { this.completionNote = completionNote; }
     public void setTags(List<String> tags)               { this.tags = tags != null ? new ArrayList<>(tags) : new ArrayList<>(); }
+
+    // ── Subtask mutation (called by service only) ─────────────────────────────
+
+    public void addSubtask(Subtask subtask)       { subtasks.add(subtask); }
+    public void removeSubtask(String subtaskId)   { subtasks.removeIf(s -> s.getId().equals(subtaskId)); }
 }
